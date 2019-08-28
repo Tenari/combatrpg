@@ -1,0 +1,12 @@
+<template name="App_home">
+  {{> loginButtons}}
+  {{#if currentUser}}
+    {{#if hasCharacter}}
+      {{> fight}}
+    {{else}}
+      <button class="create-character">create character</button>
+    {{/if}}
+  {{else}}
+    You should sign up to play
+  {{/if}}
+</template>
