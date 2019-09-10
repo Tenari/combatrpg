@@ -22,6 +22,8 @@ Template.fight.onCreated(function () {
         _.each(fight.elements, function(details){
           if (details.type == 'character' && instance.characters[details.id]) {
             instance.characters[details.id].x(details.x);
+            instance.characters[details.id].y(details.y);
+            instance.characters[details.id].frameIndex(details.frameIndex);
             instance.characters[details.id].getLayer().draw();
           }
         });
@@ -53,7 +55,7 @@ function setupFight(instance, fight){
           image: imageObj,
           animation: 'idle',
           animations: animations,
-          frameRate: 7,
+          frameRate: 1,
           frameIndex: 0
         });
 

@@ -1,3 +1,8 @@
+potential names:
+- Fantasy Fighter RPG
+- The tournament Arc
+- Combat RPG
+
 The game im trying to mull together in my head:
   - is a browser MMOG
   - is a fantasy RPG
@@ -80,3 +85,29 @@ squirrel, faries
 wolf
 bear
 dragon
+
+
+===========================================================
+
+Fights happen over a peerJS connection
+  20ms per frame
+  on browser input event, store valid inputs in inputQueue
+  on peerJS data (input) event store in opponentInputQueue 
+  Infinite game loop
+    return unless time moved forward at least 20ms from last frame
+
+    if opponentInputQueue has stuff in it
+      if the inputs matched our predictions
+        remove the inputs
+      else
+        rollback to the frame where it diverged (just involves reading the old game state out of memory)
+        simulateFrame(state, userInput, opponentInput) for the divergence
+        simulateFrame(state, userInput, predictedOpponentInput) for the frames we still don't know (back to the frame we started this loop in)
+        remove the opponentInputQueue
+
+    opponentUseInput = predict input for opponent predictInput(state)
+    useInput = read stored input for user from inputQueue that has waited the hardcoded number of input lag frames
+    newState = simulateFrame(state, useInput, opponentInputQueue) // simulates the next frame
+  endloop
+
+an input looks like: [frameNumber, [e.keyCode list]] where frameNumber is the id of the frame in which the input was created, so frameNumber + minimumLag = the frame in which the simulation includes that input
