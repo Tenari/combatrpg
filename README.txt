@@ -39,29 +39,33 @@ super simple version: A Fighting RPG
 - 2 world mode views: pokemon walking about + street fighter combat
 - 1 combat tree: sword
 - killing monsters gives you gold and xp based on how difficult the monster was
-- using a skill makes you better at that skill
+    (monster = your level? 100 xp. monster = your level - 1 ? 10 xp. -2 ? 1 xp -3? 0xp. your lvl + 1? 200xp. your lvl +2? 300xp.) (linear xp gain, exponention xp decay)
 - can attack other players
-- death => lose all skill, gold, items
-- weekly tournament crowns winner on leaderboard, gives gold, everyone else dies
+- can trade other players
+- death => lose a level (and your most recent skill), all gold and items you were carrying
 - world consists of 1 town, surrounded by wilderness in all directions, which gets progressively more deadly
-- energy mechanic/APs
 - gear consists of armor and sword + sword or sword + shield
 - use gold to buy/repair gear
+- weekly tournament crowns winner on leaderboard, gives gold, everyone else dies
+- your house is your own inaccessible portal world that everyone enters from the same place on the map, but ends up in their own house.
+- killing players in a non-duel results in a bounty being on your head
 
+v 0.001 = fight component has peer 2 peer connection, synced game simulation with rollback and two movable entities (need to decide on physics framework?)
 v 0.01 = can walk around in the overworld (tiny map, 1 squirrel enemy)
 v 0.02 = can enter fight mode
 v 0.03 = can fight + die
 v 0.04 = character management view/menus
+v 0.041 = sleeping in bed restores health
 v 0.05 = can get $ + xp
-v 0.06 = using skills in combat makes you better at that skill
+v 0.06 = can equip items
 
 COMBAT
 
 sword
-  stab
-    slash
+  stab (light attack)
+    slash (medium)
      stab-slash combo
-    overhand
+    overhand (heavy)
     feint
   parry
     counter-stab
@@ -111,3 +115,41 @@ Fights happen over a peerJS connection
   endloop
 
 an input looks like: [frameNumber, [e.keyCode list]] where frameNumber is the id of the frame in which the input was created, so frameNumber + minimumLag = the frame in which the simulation includes that input
+
+the Fight object in meteor is used for the information of who the combatants are so as to be able to PeerJS connect if its a human vs human or to simulate ai if its a human vs monster
+fight component loads:
+  first thing is to set up peerJS connection to opponent
+  show "waiting" message
+  have peerJS connection going:
+    start the fight by initializing the game simulation in matter-js, rendered with pixi-js
+
+need to answer: what happens when both peers disconnect? (close tabs) I think probably 1x per second the fight state should be updated on the Fight Mongo record to serve as a backup. That way whenever one player disconnects, the game can restart where it was last known by the server without too much hassle/loss. Then if both players disconnect, the fight is on pause indefinitely, until they both connect again. Obviously, fights need a maximum timeout condition, where if the game goes too long without the fight updating, then the player(s) who are disconnected get penalized and the fight is ended. Full loss? seems harsh penalty. Perhaps just half your hp and an energy penalty or something.
+
+=================
+
+a pure fighting game:
+    fight -> cutscene -> repeat
+lvl 1 fighting RPgame:
+    fight -> level up character -> cutscene -> repeat
+lvl 2 fighting RPgame:
+    fight -> level up character + buy/sell items -> cutscene -> repeat
+lvl 3 fighting RPgame:
+    wander world -> find monster -> fight -> level up character + buy/sell items -> repeat
+lvl 4 RPG fighter:
+    just a full RPG but fights are 1v1 fighting game style
+
+
+RPG elements
+  character progression (stats + skill trees)
+  equipment
+  open world exploration
+  expanded commerce (PvP trade, specialized NPC shops, etc)
+  non-combat skills
+    - crafting
+      - smithing
+      - alchemy
+      - enchanting
+    - resource collection
+      - wood
+      - ore
+  guilds/alliances

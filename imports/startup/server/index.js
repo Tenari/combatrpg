@@ -22,7 +22,6 @@ fs.createReadStream(Assets.absoluteFilePath('stand_sprites.png'))
           }
       }
     });
-*/
 
 Meteor.setInterval(function(){
   Fights.find({}).forEach(function(fight){
@@ -66,3 +65,4 @@ Meteor.setInterval(function(){
   })
 },1000)
 
+*/

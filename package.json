@@ -9,7 +9,10 @@
     "@babel/runtime": "^7.3.4",
     "bcrypt": "^3.0.6",
     "konva": "^4.0.5",
+    "matter-js": "^0.14.2",
     "meteor-node-stubs": "^0.4.1",
+    "peerjs": "^1.0.4",
+    "pixi.js": "^5.1.5",
     "pngjs": "^3.4.0"
   },
   "devDependencies": {

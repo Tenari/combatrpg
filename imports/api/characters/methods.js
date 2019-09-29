@@ -13,16 +13,14 @@ Meteor.methods({
     const character = {
       type: 'character', id: cid,
       x: 300, y: 300, height: 192, width: 192,
-      velocity: {x: 0, y:0},
-      animation: 'idle', frameIndex: 0, src: 'stand_sprites.png'
     };
     if (fight) {
-      Fights.update(fight._id, {$push: {elements: character, characters: cid}, $inc: {fighterCount: 1}})
+      Fights.update(fight._id, {$push: {entities: character, characters: cid}, $inc: {fighterCount: 1}})
     } else {
       Fights.insert({
         fighterCount: 1,
         characters: [cid],
-        elements: [character, {type: 'floor', height: 40}],
+        entities: [character],
         lastTick: Date.now(),
       })
     }
