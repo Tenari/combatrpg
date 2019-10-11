@@ -153,3 +153,136 @@ RPG elements
       - wood
       - ore
   guilds/alliances
+
+
+=======================
+
+3 classes: warrior, wizard, thief
+classes map to shoto, zoner, grappler, since the warrior can do both, the wizard likes to keep distance with ranged spells, and the thief likes to get in close and do big damage.
+grappling flow-chart system where a grab leads to a throw, leads to an attempted submission or attack, and escape possibilities for the victim at each stage of the flow chart
+combo system is not present/implied. there are no target combos or auto combos, everything is just based on what moves you can string together and land
+any character can learn any move, however moves in your class are cheaper to learn. moves are learned by spending "skill points." a fixed number of "skill points" are earned per level up
+3 bars: health, mana, stamina
+  which obviously line up to warrior, wizard, thief in terms of which bar the character has most of relative to the other characters
+  health: does not regenerate during fights. when your opponent lands an attack, it decreases. at 0 you die
+  mana: regenerates linearly during fights. when you use a magic-based attack, it decreases. If you do not have enough mana for a magic-based move, it whifs
+  stamina: regenerates reverse exponentially during fights, meaning that when you have only a tiny bit of bar gone, it comes back very fast, but when you have most of your bar gone, it comes back very slow. Each move (of any kind, attack, magic, grap, or just movement) uses some amount of stamina, except for block, which uses none, but can only be done if you have more than 0 stamina, and stamina does not regenerate while blocking. If you do not have enough stamina for a move you enter "heaving" state which quickly regens stamina, but leave you open for attack
+
+warrior:
+  uses a sword (medium range)
+  high hp, low mana, medium stamina
+  striking moves are cheaper to learn
+wizard:
+  uses a staff (long range)
+  low hp, high mana, medium stamina
+  magic moves are cheaper to learn
+thief:
+  uses a dagger (short range)
+  medium hp, medium mana, high stamina
+  grappling moves are cheaper to learn
+
+possible moves
+movement
+  normal l/r
+  jump
+  crouch
+  double jump
+  dash (double tap L/R)
+  air dash
+  vanish/teleport (magic grab)
+  ground slide (crouch dash)
+  fly (magic jump)
+strikes
+  light - a stab forward with the sword
+  medium - a horizontal slash with the sword
+  heavy - a top to bottom swing with the sword
+  crouching light
+  crouching medium
+  launcher (down heavy)
+  poke (forward light)
+  overhead (forward medium)
+  tackle (forward heavy)
+  feint light (back light)
+  feint medium (back medium)
+  feint heavy (back heavy)
+  flurry of strikes (quarter-circle light)
+  spin (quarter-circle medium)
+  execution (quarter-circle heavy) - stabs the sword straight down with two hands
+ranged
+  firebolt (magic light)
+  lightning (magic medium) - a lightning bolt strikes a fixed distance away from the caster the direction he is facing
+  ice aura (magic heavy) - a freezing aura briefly surrounds the caster, damaging 
+  fireblast (forward magic light) - a column of fire extends in the direction the caster faces for half the distance of the map, continously for some fixed time
+  lightning storm (forward magic medium) - ???
+  hail spikes (forward magic heavy) - a string of iceicles fall like dominoes out from the caster toward end of map
+  trifecta (quarter-circle magic) - ice spike, firebolt, and lightning bolt converge on opponent from upper left corner, upper mid, and upper right corner of screen
+  flaming stab (quarter-circle magic+light)
+  call lightning (quarter-circle magic+medium)
+grapples
+  grab
+  throw (grapple light)
+  sweep (grapple medium)
+  pull  (grapple heavy)
+  mount (frome throw/sweep, grapple light)
+  side control (from throw/sweep, grapple medium)
+  back (from pull, grapple heavy)
+  ground and pound (from mount/sidecontrol, grapple light)
+  armbar (from mount/sidecontrol/back, grapple medium)
+  choke (from side control or back, grapple heavy)
+misc
+  block
+  block low
+
+Movement Tree:
+  normal l/r
+  └── dash
+      └── air dash
+  jump
+  └── double jump
+      └── fly (magic jump)
+  crouch
+  └── ground slide (crouch dash)
+      └── vanish/teleport (magic grab)
+
+Striking Tree:
+  light
+  ├── crouching light
+  │   └── forward light
+  └── back light
+      └── quarter-circle light
+  medium
+  ├── crouching medium
+  │   └── forward medium
+  └── back medium
+      └── quarter-circle medium
+  heavy
+  ├── crouching heavy
+  │   └── forward heavy (tackle)
+  └── back heavy
+      └── quarter-circle heavy
+
+Magic Tree:
+  firebolt
+  └── fireblast (forward)
+      ├── quarter-circle magic (requires lighting storm and hail spikes)
+      └── quarter-circle magic+light
+  lightning
+  └── lightning storm (forward)
+      ├── quarter-circle magic (requires hail spikes and fireblast)
+      └── quarter-circle magic+medium
+  ice aura
+  └── hail spikes (forward)
+      ├── quarter-circle magic (requires lighting storm and fireblast)
+      └── quarter-circle magic+heavy
+
+Grappling Tree: (only shows learning path, not routes you can use in combat, since the armbar can be done from all positions)
+  grab
+  ├── throw
+  │   └── side-control
+  |       └── armbar
+  ├── sweep
+  │   └── mount
+  │       └── ground and pound
+  └── pull
+      └── back
+          └── choke
