@@ -10,17 +10,18 @@ Meteor.methods({
       createdAt: new Date(),
     });
     const fight = Fights.findOne({fighterCount: 1})
-    const character = {
+    let character = {
       type: 'character', id: cid,
-      x: 300, y: 300, height: 192, width: 192,
+      x: 100, y: 10, height: 192, width: 192,
     };
     if (fight) {
+      character.x = 400;
       Fights.update(fight._id, {$push: {entities: character, characters: cid}, $inc: {fighterCount: 1}})
     } else {
       Fights.insert({
         fighterCount: 1,
         characters: [cid],
-        entities: [character],
+        entities: [{x:-200, y:650, height: 200, width: 2000, type: 'ground', matterOptions: {isStatic: true}},character],
         lastTick: Date.now(),
       })
     }

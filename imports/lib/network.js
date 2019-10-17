@@ -2,15 +2,16 @@
 export function Network(options) {
   options = options || {};
   // CONSTANTS
-  var INPUT_DELAY = options.inputDelay || 3;                // This must be set to a value of 1 or higher.
+  this.INPUT_DELAY = options.inputDelay || 3;               // This must be set to a value of 1 or higher.
   var INPUT_HISTORY_SIZE = options.inputHistorySize || 50;  // The size of the input history buffer. Must be atleast 1
   var SEND_DELAY_FRAMES = 5;          // Delay sending packets when this value is greater than 0. Set on both clients to not have one ended latency.
   var SEND_HISTORY_SIZE = 5;          // The number of inputs we send from the input history buffer. Must be atleast 1.
+  this.ROLLBACK_MAX_FRAMES = 8;       // The maximum number of frames we allow the game run forward without a confirmed frame from the opponent
 
   // VARIABLES
   this.enabled = false;               // set to true when the network is running
-  this.connectedToClient = false;
-  this.isServer = false;
+  this.connectedToClient = false;     // true when the handshake has happened and we are connected to the opponent
+  this.isServer = false;              // duh
   this.connection = null;             // the PeerJS object for the connection
   this.confirmedTick = 0;             // The confirmed tick indicates up to what game frame we have the inputs for.
 	this.inputState = null;             // Current input state sent over the network
@@ -23,8 +24,8 @@ export function Network(options) {
   this.latency = 0;                   // Keeps track of the latency.
   this.toSendPackets = [];            // Packets that have been queued for sending later. Used to test network latency.
   this.lastSyncedTick = -1;           // Indicates the last game tick that was confirmed to be in sync.
-  this.localTickDelta = 0;            // Stores the difference between the last local tick and the remote confirmed tick. Remote client.
-  this.remoteTickDelta = 0;           // Stores the difference between the last local tick and the remote confirmed tick sent from the remote client.
+  this.localTickDelta = 0;            // last local tick - this.confirmedTick
+  this.remoteTickDelta = 0;           // the remote's localTickDelta (the remote's difference between current tick and most recent known input tick)
   this.desyncCheckRate = 20;          // The rate at which we check for state desyncs.
   this.localSyncData = null;          // Latest local data for state desync checking.
   this.remoteSyncData = null;         // Latest remote data for state desync checking.
@@ -47,19 +48,20 @@ export function Network(options) {
     INPUT_CODES[code] = 2 ** index; // 2 ^ index for binary increasing
   })
   // Encodes the player input state into a compact form for network transmission.
-  this.encodeInput = function(inputs) { // inputs is an array of keyCodes
+  this.encodeInput = function(inputs) { // inputs is an object of {keyCode : boolean}
     // the basic idea is to just send one number over the network representing the entire input state
     var state = 0;
-    _.each(inputs, function(input) {
-      state = state | INPUT_CODES[input];
+    _.each(inputs, function(down, keyCode) {
+      if (down && INPUT_CODES[keyCode])
+        state = state | INPUT_CODES[keyCode];
     })
     return state;
   }
-  // takes a single state number and translates it into an array of keyCodes
+  // takes a single state number and translates it into an object of {keyCode : boolean}
   this.decodeInput = function(state) {
-    var inputs = [];
+    var inputs = {};
     _.each(INPUT_CODES, function(binary, code) {
-      if (state & binary) inputs.push(code);
+      if (state & binary) inputs[code] = true;
     })
     return inputs;
   }
@@ -72,30 +74,32 @@ export function Network(options) {
     this.isServer = false;
 
     // Start the connection with the server
-    this.connectToServer();
+    this.handshakeConnect();
   }
   // Connects to the other player who is hosting as the server.
   // This must be called to connect with the server.
-  this.connectToServer = function() {
+  this.handshakeConnect = function() {
     this.sendPacket(this.makeHandshakePacket(), 5);
   }
 
   // Setup a network connection as the server then wait for a client to connect.
-  this.startServer = function()
+  this.startServer = function() {
     console.log("Starting Server")
 
     this.enabled = true;
     this.isServer = true;
+
+    this.handshakeConnect();
   }
 
-  // Get input array of keyCodes from the remote player for the passed in game tick.
+  // Get input object of {keyCode : boolean} from the remote player for the passed in game tick.
   this.getRemoteInputState = function(tick) {
     if (tick > this.confirmedTick) {
       tick = this.confirmedTick; // Repeat the last confirmed input when we don't have a confirmed tick
     }
     return this.decodeInput(this.remoteInputHistory[tick % INPUT_HISTORY_SIZE]);
   }
-  // Get input state for the local client (state = array of keyCodes)
+  // Get input state for the local client (state = object of {keyCode : boolean})
   this.getLocalInputState = function(tick) {
     return this.decodeInput(this.inputHistory[tick % INPUT_HISTORY_SIZE]);
   }
@@ -156,11 +160,12 @@ export function Network(options) {
   this.sendPacket = function(packet, duplicates) {
     if (!duplicates) duplicates = 1;
 
+    var that = this;
     _.times(duplicates, function() {
       if (SEND_DELAY_FRAMES > 0) {
-        this.sendPacketWithDelay(packet);
+        that.sendPacketWithDelay(packet);
       } else {
-        this.sendPacketRaw(packet);
+        that.sendPacketRaw(packet);
       }
     })
   }
@@ -174,14 +179,15 @@ export function Network(options) {
     this.connection.send(packet);
   }
 
-  // Send all packets which have been queued and who's delay time as elapsed.
+  // Send all packets which have been queued and who's delay time has elapsed.
   this.processDelayedPackets = function() {
     let newPacketList = [];  // List of packets that haven't been sent yet.
     let timeInterval = (SEND_DELAY_FRAMES*20); // How much time must pass (converting from frames into ms)
 
+    var that = this;
     _.each(this.toSendPackets, function(data, index){
       if (((new Date().getTime()) - data.time) > timeInterval) {
-        this.sendPacketRaw(data.packet);  // Send packet when enough time as passed.
+        that.sendPacketRaw(data.packet);  // Send packet when enough time as passed.
       } else {
         newPacketList.push(data);         // Keep the packet if the not enough time as passed.
       }
@@ -214,7 +220,7 @@ export function Network(options) {
       }
 
       if (receivedTick > this.confirmedTick) {
-        if (receivedTick - this.confirmedTick > this.inputDelay) {
+        if (receivedTick - this.confirmedTick > this.INPUT_DELAY) {
           console.log("Received packet with a tick too far ahead. Last: " + this.confirmedTick + "     Current: " + receivedTick );
         }
 
@@ -222,12 +228,12 @@ export function Network(options) {
         // PacketLog("Received Input: " .. results[3+NET_SEND_HISTORY_SIZE] .. " @ " ..  receivedTick) 
 
         // data.inputs is an array of encoded inputState numbers starting with the receivedTick and progressing back in time
+        var that = this;
         _.each(data.inputs, function(inputState, index){
-          this.setRemoteEncodedInput(inputState, receivedTick-index); // update our record of the remote's encoded inputs
+          that.setRemoteEncodedInput(inputState, receivedTick-index); // update our record of the remote's encoded inputs
         })
       }
-
-      console.log(`Received Tick: ${receivedTick},  Input: ${this.remoteInputHistory[this.confirmedTick % INPUT_HISTORY_SIZE]}`)
+//      console.log(`Received Tick: ${receivedTick},  Input: ${this.remoteInputHistory[this.confirmedTick % INPUT_HISTORY_SIZE]}`)
     } else if (code == msgCode.ping) {
       this.sendPacket(this.makePongPacket(data.time));
     } else if (code == msgCode.pong) {
@@ -275,7 +281,7 @@ export function Network(options) {
   }
   // Sends sync data
   this.sendSyncData = function() {
-    self:SendPacket(self:MakeSyncDataPacket(self.localSyncDataTick, self.localSyncData), 5)
+    this.sendPacket(this.makeSyncDataPacket(this.localSyncDataTick, this.localSyncData), 5);
   }
   // Make a sync data packet
   this.makeSyncDataPacket = function(tick, syncData) {

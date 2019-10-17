@@ -1,0 +1,97 @@
+{"frames": {
+
+"bg.jpeg":
+{
+	"frame": {"x":0,"y":111,"w":1920,"h":1080},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1920,"h":1080},
+	"sourceSize": {"w":1920,"h":1080},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"ground.png":
+{
+	"frame": {"x":0,"y":48,"w":1909,"h":63},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":1909,"h":63},
+	"sourceSize": {"w":1909,"h":63},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"run.0001.png":
+{
+	"frame": {"x":240,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"run.0002.png":
+{
+	"frame": {"x":192,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"run.0003.png":
+{
+	"frame": {"x":144,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"run.0004.png":
+{
+	"frame": {"x":96,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"stand.0001.png":
+{
+	"frame": {"x":48,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"stand.0002.png":
+{
+	"frame": {"x":0,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"stand.0003.png":
+{
+	"frame": {"x":288,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+}},
+"animations": {
+	"run.": ["run.0001.png","run.0002.png","run.0003.png","run.0004.png"],
+	"stand.": ["stand.0001.png","stand.0002.png","stand.0003.png"]
+},
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "spritesheet.png",
+	"format": "RGBA8888",
+	"size": {"w":1920,"h":1191},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:77f3ba8768cd65a8396d52309bf42867:129475eda0ba802bb1996cbacc22ec8a:729adc6043343cfda41c447ce8f464d6$"
+}
+}
