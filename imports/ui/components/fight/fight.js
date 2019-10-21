@@ -15,7 +15,6 @@ Template.fight.onCreated(function () {
   this.subscribe('fights.all');
   $(window).on('keydown', handleKey(this));
   $(window).on('keyup', handleKey(this));
-  this.opponentInputHistory = {};
   this.localInput = {}; // {keyCode: boolean} mapping
   this.tick = 1;
   this.network = new Network();
@@ -69,19 +68,6 @@ function setupFight(instance){
       instance.network.handshakeConnect();
     }
     //console.log(instance.tick, instance.network.inputHistory, instance.localInput);
-    /*
-    instance.network.setLocalInput(instance.localInput, instance.tick);
-
-    instance.fightEngine.renderFrame(instance.tick, instance.inputHistory, instance.opponentInputHistory);
-    instance.tick += 1;
-    if (!instance.opponentInputHistory[instance.tick - 4]) { // if we DONT have the inputs for 5 frames ago...
-      // we have to wait
-      console.log('waiting', instance.tick);
-    } else {
-      instance.fightEngine.renderFrame(instance.tick, instance.inputHistory, instance.opponentInputHistory);
-      instance.tick += 1;
-      console.log(instance.tick);
-    } */
 
     const lastGameTick = instance.tick;
     let updateGame = false;
@@ -95,7 +81,7 @@ function setupFight(instance){
 
       if (instance.network.connectedToClient) {
         // Run any rollbacks that can be processed before the next game update
-        //HandleRollbacks()
+        instance.fightEngine.handleRollbacks(lastGameTick-1, instance.network)
 
         // Calculate the difference between remote game tick and the local. This will be used for syncing.
         // We don't use the latest local tick, but the tick for the latest input sent to the remote client.
@@ -126,14 +112,11 @@ function setupFight(instance){
     if (updateGame) {
       // Test rollbacks
       //TestRollbacks()
-      //poop
+      console.log(instance.tick, instance.fightEngine.tick);
 
       if (instance.network.enabled) {
         // Update local input history
         instance.network.setLocalInput(instance.localInput, lastGameTick + instance.network.INPUT_DELAY);
-
-        const localPlayerInputState = instance.network.getLocalInputState(lastGameTick);
-        const remotePlayerInputState = instance.network.getRemoteInputState(lastGameTick);
 
         instance.fightEngine.update(instance.network, lastGameTick) // means update the game world 1 tick forward.
         instance.tick += 1;
@@ -154,10 +137,10 @@ function setupFight(instance){
           instance.network.lastSyncedTick = lastGameTick;
 
           // Applied the remote player's input, so this game frame should synced.
-          //Game:StoreState()
+          instance.fightEngine.storeState();
 
           // Confirm the game clients are in sync
-          //Game:SyncCheck()
+          instance.fightEnging.syncCheck();
         }
       }
     }

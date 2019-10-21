@@ -6,8 +6,11 @@ export function FightEngine(fight, character, $container){
   var that = this;
   this.tick = 0;
   this.entities = [];
-  this.pastStates = {};
   this.characters = {};
+  this.storedState = {};
+  this.localInputBuffer = [];
+  this.remoteInputBuffer = [];
+
   var OLD_FRAMES = 5;
   PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
@@ -43,24 +46,6 @@ export function FightEngine(fight, character, $container){
   })
   Matter.World.add(this.world, bodies);
 
-  /*var inputMap = {
-    68 : function(entity){ // move right
-      let vel = entity.body.velocity;
-      vel.x += 1;
-      Matter.Body.setVelocity(entity.body, vel);
-    },
-    65 : function(entity){ // move left
-      let vel = entity.body.velocity;
-      vel.x -= 1;
-      Matter.Body.setVelocity(entity.body, vel);
-    },
-    87 : function(entity){ // jump
-      let vel = entity.body.velocity;
-      vel.y -= 10;
-      Matter.Body.setVelocity(entity.body, vel);
-    }
-  } */
-
   // step forward 1 tick
   this.update = function(network, tick){
     _.each(fight.characters, function(cid) {
@@ -74,33 +59,10 @@ export function FightEngine(fight, character, $container){
         inputHistory[i] = network['get'+code+'InputState'](tick-i) || {};
       }
       entity.act(inputHistory, tick + 1);
-      /*_.each(input, function(bool, key) {
-        if (bool && typeof inputMap[key] === 'function') {
-          inputMap[key](entity);
-        }
-      }) */
     })
-    this.renderFrame(tick + 1);
-  }
-
-  this.renderFrame = function(frameNumber) {
-    if (frameNumber > this.tick) {
-      delete this.pastStates[this.tick - OLD_FRAMES];
-      this.pastStates[this.tick] = this.currentState(); //save the current state
-
-      // simulate forward
-      Matter.Engine.update(this.physicsEngine, 20)
-    } else if (frameNumber < this.tick) {
-      //rollback to frameNumber
-      var that = this;
-      _.each(this.pastStates[frameNumber].entities, function(e){
-        e = JSON.parse(e);
-        Matter.Body.setVelocity(that.entities[e.index].body, e.velocity);
-        Matter.Body.setPosition(that.entities[e.index].body, e.position);
-      })
-    } // else frameNumber == tick, do nothing
+    Matter.Engine.update(this.physicsEngine, 20)
     this.matchAndRender();
-    this.tick = frameNumber;
+    this.tick = tick + 1;
   }
 
   this.currentState = function(){
@@ -109,22 +71,12 @@ export function FightEngine(fight, character, $container){
       entities: _.map(this.entities, function(entity, index){
         return JSON.stringify({index, position: entity.body.position, velocity: entity.body.velocity});
       }),
-      inputs: []
     };
   }
 
   // Stores the state of all rollbackable objects and systems in the game.
   this.storeState = function() {
     this.storedState = this.currentState();
-    /*
-    // All rollbackable objects and systems will have a CopyState() method.
-    this.storedState.world = World:CopyState()
-    this.storedState.inputSystem = InputSystem:CopyState()
-    this.storedState.matchSystem = MatchSystem:CopyState()
-    this.storedState.players = {self.players[1]:CopyState(), self.players[2]:CopyState()}
-
-    this.storedState.tick = this.tick
-    */
   }
 
   this.getSyncData = function() {
@@ -139,5 +91,54 @@ export function FightEngine(fight, character, $container){
       }
     })
     this.pixiApp.renderer.render(this.pixiApp.stage);
+  }
+
+
+  // rollback to the game state in `this.storedState`
+  this.restoreState = function(network){
+    var that = this;
+    _.each(this.storedState.entities, function(e){
+      e = JSON.parse(e);
+      Matter.Body.setVelocity(that.entities[e.index].body, e.velocity);
+      Matter.Body.setPosition(that.entities[e.index].body, e.position);
+    })
+    this.tick = this.storedState.tick;
+  }
+
+  // Rollback if needed.
+  this.handleRollbacks = function(tick, network){
+    // The input needed to resync state is available so rollback.
+    // Network.lastSyncedTick keeps track of the lastest synced game tick.
+    // When the tick count for the inputs we have is more than the number of synced ticks it's possible to rerun those game updates with a rollback.
+    if (tick >= 0 && tick > (network.lastSyncedTick + 1) && network.confirmedTick > network.lastSyncedTick) {
+
+      // Must revert back to the last known synced game frame.
+      this.restoreState();
+
+      // The number of frames that's elasped since the game has been out of sync.
+      // Rerun rollbackFrames number of updates.
+      let rollbackFrames = tick - network.lastSyncedTick;
+      console.log('rollingback ' + rollbackFrames + ' frames');
+
+      for (let i=0; i < rollbackFrames; i += 1) {
+        let lastRolledBackGameTick = this.tick;
+        this.update(network, latRolledBackGameTick);
+
+        // Confirm that we are indeed still synced
+        if (lastRolledBackGameTick <= network.confirmedTick) {
+          // Store the state since we know it's synced. We really only need to call this on the last synced frame.
+          // Leaving in for demonstration purposes.
+          this.storeState();
+          network.lastSyncedTick = lastRolledBackGameTick;
+
+          // Confirm the game clients are in sync
+          this.syncCheck();
+        }
+      }
+    }
+  }
+
+  this.syncCheck = function(){
+    // TODO
   }
 };

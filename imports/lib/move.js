@@ -79,6 +79,9 @@ export function Move(definition) {
     if (definition.effects.velocity) {
       Matter.Body.setVelocity(entity.body, Matter.Vector.create(definition.effects.velocity, entity.body.velocity.y));
     }
+    if (definition.effects.vertical) {
+      Matter.Body.setVelocity(entity.body, Matter.Vector.create(entity.body.velocity.x, definition.effects.vertical));
+    }
     // do stuff
     return entity.state.moveFrame = nextFrame;
   }
