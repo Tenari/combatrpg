@@ -286,3 +286,24 @@ Grappling Tree: (only shows learning path, not routes you can use in combat, sin
   └── pull
       └── back
           └── choke
+
+Items: all items are class limited
+
+  slots: weapon, head, body
+  weapons: dagger, sword, staff
+  head: hood, floppy hat, helmet
+  body: cloak, robe, gambeson
+
+  Thief
+    weapons: pocket knife, iron dagger, steel dagger
+    head: beanie, wool hood, leather hood
+    body: clothes, wool cloak, leather cloak
+  Warrior
+    weapons: rusted sword, iron sword, steel sword
+    head: wooden helmet, iron helmet, steel helmet
+    body: clothes, gambeson, chain mail
+  Wizard
+    weapons: quarterstaff, gnarled gem staff, fine gem staff
+    head: hat, wool wide brim hat, suede wide brim hat
+    body: clothes, wool robe, fine robe
+

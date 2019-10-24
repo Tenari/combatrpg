@@ -4,7 +4,7 @@ import { FightEngine } from '/imports/lib/fightEngine.js';
 import { Network } from '/imports/lib/network.js';
 import { Fights } from '/imports/api/fights/fights.js';
 import { Characters } from '/imports/api/characters/characters.js';
-import { animations } from '/imports/config/animation.js';
+import { BUTTONS } from '/imports/config/moves.js';
 import './fight.html';
 
 Template.fight.onDestroyed(function () {
@@ -17,7 +17,7 @@ Template.fight.onCreated(function () {
   $(window).on('keyup', handleKey(this));
   this.localInput = {}; // {keyCode: boolean} mapping
   this.tick = 1;
-  this.network = new Network();
+  this.network = new Network({recognizedInputs: _.values(BUTTONS)});
 
   this.autorun(() => {
     var instance = this;
@@ -112,7 +112,6 @@ function setupFight(instance){
     if (updateGame) {
       // Test rollbacks
       //TestRollbacks()
-      console.log(instance.tick, instance.fightEngine.tick);
 
       if (instance.network.enabled) {
         // Update local input history

@@ -12,6 +12,7 @@ export const BUTTONS = {
 };
 export const MOVES = {
   light_attack: {
+    key: 'light_attack',
     stages: [
       {// in the current frame you must be pressing light
         inputs: [BUTTONS.light],
@@ -21,10 +22,20 @@ export const MOVES = {
     ],
     blockingConditions: [],
     effects: {
-      frames:[1,2,3,4,5,6],
+      frames:[
+        {spriteName: 'barb', spriteNumber: '0001'},
+        {spriteName: 'barb', spriteNumber: '0001'},
+        {spriteName: 'barb', spriteNumber: '0002'},
+        {spriteName: 'barb', spriteNumber: '0002'},
+        {spriteName: 'barb', spriteNumber: '0002'},
+        {spriteName: 'barb', spriteNumber: '0002'},
+        {spriteName: 'barb', spriteNumber: '0001'},
+        {spriteName: 'barb', spriteNumber: '0001'},
+      ],
     }
   },
   dash_right: {
+    key: 'dash_right',
     stages: [
       {// in the current frame you must be pressing right
         inputs: [BUTTONS.right],
@@ -49,6 +60,7 @@ export const MOVES = {
     }
   },
   dash_left: { // see dash_right, but switch all the directional buttons
+    key: 'dash_left',
     stages: [
       {
         inputs: [BUTTONS.left],
@@ -73,6 +85,7 @@ export const MOVES = {
     }
   },
   jump: {
+    key: 'jump',
     stages: [{inputs:[BUTTONS.jump],errorInputs:[BUTTONS.down],link:1}],
     blockingConditions: [],
     effects: {
@@ -81,6 +94,7 @@ export const MOVES = {
     }
   },
   right: {
+    key: 'right',
     stages: [{inputs:[BUTTONS.right],errorInputs:[BUTTONS.left],link:1}],
     blockingConditions: [],
     effects: {
@@ -89,6 +103,7 @@ export const MOVES = {
     }
   },
   left: {
+    key: 'left',
     stages: [{inputs:[BUTTONS.left],errorInputs:[BUTTONS.right],link:1}],
     blockingConditions: [],
     effects: {

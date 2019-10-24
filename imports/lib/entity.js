@@ -6,24 +6,20 @@ import { Move } from '/imports/lib/move.js';
 export function Entity(options, pixiApp) {
   let that = this;
 
+  this.sprites = {};
   this.state = {
     walking: false,
     dashing: false,
     move: null,
     moveFrame: null, // the last perfom()ed move frame (relative to the move itself, not the global gameTick)
   }
-  var INPUTS = {
-    'jump': 87,
-    'down': 83,
-    'left': 65,
-    'right': 68,
-  };
-  var SPEED = 3;
 
   // array in reverse priority order
   this.knownMoves = [
+    new Move(MOVES.light_attack),
     new Move(MOVES.dash_left),
     new Move(MOVES.dash_right),
+    new Move(MOVES.jump),
     new Move(MOVES.left),
     new Move(MOVES.right)
   ];
@@ -38,15 +34,56 @@ export function Entity(options, pixiApp) {
 
   this.loadedFn = function(loader, resources) {
     this.sheet = pixiApp.loader.resources[this.spritesheet].spritesheet;
-    this.sprite = new PIXI.Sprite(this.sheet.textures[options.type == 'ground' ? 'ground.png' : this.idleSprites[0]]);
-    this.sprite.width = options.width;
-    this.sprite.height = options.height;
-    this.sprite.position.set(options.x, options.y);
-    pixiApp.stage.addChild(this.sprite);
+    if (options.type == 'ground') {
+      this.sprite = new PIXI.Sprite(this.sheet.textures['ground.png']);
+      this.sprite.width = options.width;
+      this.sprite.height = options.height;
+      this.sprite.position.set(options.x, options.y);
+      pixiApp.stage.addChild(this.sprite);
+    } else {
+      console.log(this.sheet.textures['barb-armor.png']);
+      let widthFactor = options.width / this.sheet.textures['barb_clothes_0001.png'].orig.width;
+      let heightFactor = options.height / this.sheet.textures['barb_clothes_0001.png'].orig.height;
+      this.sprites.body = new PIXI.Sprite(this.sheet.textures['barb_body_0001.png']);
+      this.sprites.body.width = options.width;
+      this.sprites.body.height = options.height;
+      this.sprites.clothes = new PIXI.Sprite(this.sheet.textures['barb_clothes_0001.png']);
+      this.sprites.clothes.width = options.width;
+      this.sprites.clothes.height = options.height;
+      this.sprites.weapon = new PIXI.Sprite(this.sheet.textures['barb_weapon_0001.png']);
+      this.sprites.weapon.width = this.sheet.textures['barb_weapon_0001.png'].orig.width * widthFactor;
+      this.sprites.weapon.height = this.sheet.textures['barb_weapon_0001.png'].orig.height * heightFactor;
+      this.sprites.weapon.anchor.set(0.375, 0.5);
+
+      this.container = new PIXI.Container();
+      this.container.position.set(options.x, options.y);
+      let that = this;
+      _.each(this.sprites, function(sprite, key) {
+        that.container.addChild(sprite)
+      })
+      pixiApp.stage.addChild(this.container);
+    }
   }
 
   this.setSprite = function(spriteName){
-    this.sprite.texture = this.sheet.textures[spriteName];
+    if (this.sprite) {
+      this.sprite.texture = this.sheet.textures[spriteName];
+    }
+  }
+
+  this.setSprites = function(name, number){
+    let faceRight = true;
+    // TODO actually use correct logic for facing the characters towards each other
+    if (options.id == "3q2vrjgggLmJDR5uJ") {
+      faceRight = false;
+    }
+    let that = this;
+    _.each(['body','clothes','weapon'], function(part){
+      that.sprites[part].texture = that.sheet.textures[name+"_"+part+"_"+number+".png"];
+      if (!faceRight && that.sprites[part].scale.x > 0) {
+        that.sprites[part].scale.x = -1 * that.sprites[part].scale.x;
+      }
+    })
   }
 
   // create the Matter.Body relevant for the entityState passed in
@@ -83,64 +120,7 @@ export function Entity(options, pixiApp) {
     if (this.state.move) {
       this.state.move.perform(this);
     } else { // idle
-      this.setSprite(this.idleSprites[ Math.floor(tick/this.idleFrameRate) % this.idleSprites.length]);
+      //this.setSprite(this.idleSprites[ Math.floor(tick/this.idleFrameRate) % this.idleSprites.length]);
     }
-
-    // movement
-    // detect dashing, defined as double tap same movement direction without any other movement keys pressed
-      // maximum time between taps is 20 frames
-    /*
-    if (this.state.dashing) {
-      if (tick - this.state.dashStart >= 25) { // dash for 25 frames
-        this.state.dashing = false;
-        Matter.Body.setVelocity(this.body, Matter.Vector.create(0, this.body.velocity.y));
-      }
-    // to initiate a dash, must currently be pressing left or right (but not both)
-    } else if ((inputHistory[0][INPUTS.left] && !inputHistory[0][INPUTS.right]) || (inputHistory[0][INPUTS.right] && !inputHistory[0][INPUTS.left])) {
-      let moveDirection = inputHistory[0][INPUTS.left] ? 'left' : 'right';
-      let otherDirection = moveDirection == 'left' ? 'right' : 'left';
-      // AND, previous frame must NOT be pressing either left or right
-      if (!inputHistory[1][INPUTS.left] && !inputHistory[1][INPUTS.right]) {
-        // loop back through previous 20 frames of input to find matching directional input
-        let hitWrongDirection = false;
-        let foundPreviousTap = false;
-        let i = 2;
-        while (!foundPreviousTap && !hitWrongDirection && i < 20) {
-          if (inputHistory[i][INPUTS[moveDirection]]) foundPreviousTap = true;
-          if (inputHistory[i][INPUTS[otherDirection]]) hitWrongDirection = true;
-          i += 1;
-        }
-        if (!hitWrongDirection && foundPreviousTap) {
-          // DASHING!
-          console.log('dashing');
-          this.dash(moveDirection, tick);
-        } else {
-          console.log('here');
-          this.normalMove(moveDirection);
-        }
-      } else { // if the previous input state DID have a directional input, then we know we aren't dashing, so just normal move
-        this.normalMove(moveDirection);
-      }
-    } */
-  }
-
-  this.normalMove = function(direction) {
-    let x = SPEED;
-    if (direction === 'left') {
-      x = -1*SPEED;
-    }
-    this.state.walking = true;
-    Matter.Body.setVelocity(this.body, Matter.Vector.create(x, this.body.velocity.y));
-  }
-
-  this.dash = function(direction, tick) {
-    let x = 3*SPEED;
-    if (direction === 'left') {
-      x = -3*SPEED;
-    }
-    this.state.dashStart = tick;
-    this.state.dashing = true;
-    this.state.walking = false;
-    Matter.Body.setVelocity(this.body, Matter.Vector.create(x, this.body.velocity.y));
   }
 };

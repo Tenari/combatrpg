@@ -71,6 +71,7 @@ export function Move(definition) {
 
   // SIDE EFFECTS!!! This is the method that does the move on the Entity. Handles changing sprite frame, velocity, hitboxes+hurtboxes+pushboxes
   this.perform = function(entity){
+    console.log(definition.key);
     const nextFrame = entity.state.moveFrame + 1;
     const newFrame = definition.effects.frames[nextFrame];
     if (!newFrame) {
@@ -81,6 +82,9 @@ export function Move(definition) {
     }
     if (definition.effects.vertical) {
       Matter.Body.setVelocity(entity.body, Matter.Vector.create(entity.body.velocity.x, definition.effects.vertical));
+    }
+    if (_.isObject(newFrame) && newFrame.spriteName && newFrame.spriteNumber) {
+      entity.setSprites(newFrame.spriteName, newFrame.spriteNumber);
     }
     // do stuff
     return entity.state.moveFrame = nextFrame;

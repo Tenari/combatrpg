@@ -1,5 +1,59 @@
 {"frames": {
 
+"barb_body_0001.png":
+{
+	"frame": {"x":336,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"barb_body_0002.png":
+{
+	"frame": {"x":384,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"barb_clothes_0001.png":
+{
+	"frame": {"x":480,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"barb_clothes_0002.png":
+{
+	"frame": {"x":432,"y":0,"w":48,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
+	"sourceSize": {"w":48,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"barb_weapon_0001.png":
+{
+	"frame": {"x":592,"y":0,"w":64,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":48},
+	"sourceSize": {"w":64,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
+"barb_weapon_0002.png":
+{
+	"frame": {"x":528,"y":0,"w":64,"h":48},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":64,"h":48},
+	"sourceSize": {"w":64,"h":48},
+	"anchor": {"x":0.5,"y":0.5}
+},
 "bg.jpeg":
 {
 	"frame": {"x":0,"y":111,"w":1920,"h":1080},
@@ -20,7 +74,7 @@
 },
 "run.0001.png":
 {
-	"frame": {"x":240,"y":0,"w":48,"h":48},
+	"frame": {"x":48,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -29,7 +83,7 @@
 },
 "run.0002.png":
 {
-	"frame": {"x":192,"y":0,"w":48,"h":48},
+	"frame": {"x":0,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -38,7 +92,7 @@
 },
 "run.0003.png":
 {
-	"frame": {"x":144,"y":0,"w":48,"h":48},
+	"frame": {"x":96,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -47,7 +101,7 @@
 },
 "run.0004.png":
 {
-	"frame": {"x":96,"y":0,"w":48,"h":48},
+	"frame": {"x":240,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -56,7 +110,7 @@
 },
 "stand.0001.png":
 {
-	"frame": {"x":48,"y":0,"w":48,"h":48},
+	"frame": {"x":144,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -65,7 +119,7 @@
 },
 "stand.0002.png":
 {
-	"frame": {"x":0,"y":0,"w":48,"h":48},
+	"frame": {"x":192,"y":0,"w":48,"h":48},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":48,"h":48},
@@ -82,6 +136,9 @@
 	"anchor": {"x":0.5,"y":0.5}
 }},
 "animations": {
+	"barb_body": ["barb_body_0001.png","barb_body_0002.png"],
+	"barb_clothes": ["barb_clothes_0001.png","barb_clothes_0002.png"],
+	"barb_weapon": ["barb_weapon_0001.png","barb_weapon_0002.png"],
 	"run.": ["run.0001.png","run.0002.png","run.0003.png","run.0004.png"],
 	"stand.": ["stand.0001.png","stand.0002.png","stand.0003.png"]
 },
@@ -92,6 +149,6 @@
 	"format": "RGBA8888",
 	"size": {"w":1920,"h":1191},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:77f3ba8768cd65a8396d52309bf42867:129475eda0ba802bb1996cbacc22ec8a:729adc6043343cfda41c447ce8f464d6$"
+	"smartupdate": "$TexturePacker:SmartUpdate:4050c5d7f2871209535f1b72919c7cb0:a2ab2d738f998c2aa89075af181aa797:729adc6043343cfda41c447ce8f464d6$"
 }
 }
