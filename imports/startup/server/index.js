@@ -4,7 +4,6 @@ import './fixtures.js';
 import './register-api.js';
 
 import { Fights } from '/imports/api/fights/fights.js';
-import { animations } from '/imports/config/animation.js';
 import PNG from 'pngjs';
 let png = PNG.PNG;
 import fs from 'fs';

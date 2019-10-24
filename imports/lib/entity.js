@@ -41,7 +41,6 @@ export function Entity(options, pixiApp) {
       this.sprite.position.set(options.x, options.y);
       pixiApp.stage.addChild(this.sprite);
     } else {
-      console.log(this.sheet.textures['barb-armor.png']);
       let widthFactor = options.width / this.sheet.textures['barb_clothes_0001.png'].orig.width;
       let heightFactor = options.height / this.sheet.textures['barb_clothes_0001.png'].orig.height;
       this.sprites.body = new PIXI.Sprite(this.sheet.textures['barb_body_0001.png']);

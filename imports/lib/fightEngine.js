@@ -99,7 +99,7 @@ export function FightEngine(fight, character, $container){
 
   // rollback to the game state in `this.storedState`
   this.restoreState = function(network){
-    console.log(this.storedState);
+    console.log('restoring state', this.storedState);
     var that = this;
     _.each(this.storedState.entities, function(e){
       e = JSON.parse(e);
@@ -111,6 +111,7 @@ export function FightEngine(fight, character, $container){
 
   // Rollback if needed.
   this.handleRollbacks = function(tick, network){
+    console.log('checking to rollback')
     // The input needed to resync state is available so rollback.
     // Network.lastSyncedTick keeps track of the lastest synced game tick.
     // When the tick count for the inputs we have is more than the number of synced ticks it's possible to rerun those game updates with a rollback.

@@ -67,7 +67,7 @@ function setupFight(instance){
     if (!instance.network.connectedToClient) {
       instance.network.handshakeConnect();
     }
-    //console.log(instance.tick, instance.network.inputHistory, instance.localInput);
+    console.log(instance.tick, instance.network.confirmedTick. instance.network.lastSyncedTick);
 
     const lastGameTick = instance.tick;
     let updateGame = false;
@@ -139,7 +139,7 @@ function setupFight(instance){
           instance.fightEngine.storeState();
 
           // Confirm the game clients are in sync
-          instance.fightEnging.syncCheck();
+          instance.fightEngine.syncCheck();
         }
       }
     }
@@ -152,7 +152,7 @@ function setupFight(instance){
         instance.network.sendPingMessage();
       }
     }
-  }, 20)
+  }, 2000)
 
   // start the 20ms update loop
   // for each 20ms frame
