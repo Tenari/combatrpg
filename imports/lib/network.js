@@ -23,7 +23,7 @@ export function Network(options) {
   this.syncDataTicks = [];            // Keeps track of the tick for each sync data index
   this.latency = 0;                   // Keeps track of the latency.
   this.toSendPackets = [];            // Packets that have been queued for sending later. Used to test network latency.
-  this.lastSyncedTick = -1;           // Indicates the last game tick that was confirmed to be in sync.
+  this.lastSyncedTick = 0;           // Indicates the last game tick that was confirmed to be in sync.
   this.localTickDelta = 0;            // last local tick - this.confirmedTick
   this.remoteTickDelta = 0;           // the remote's localTickDelta (the remote's difference between current tick and most recent known input tick)
   this.desyncCheckRate = 20;          // The rate at which we check for state desyncs.

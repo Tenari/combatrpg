@@ -67,7 +67,7 @@ function setupFight(instance){
     if (!instance.network.connectedToClient) {
       instance.network.handshakeConnect();
     }
-    console.log(instance.tick, instance.network.confirmedTick. instance.network.lastSyncedTick);
+    if (instance.tick > 100) return false;
 
     const lastGameTick = instance.tick;
     let updateGame = false;
@@ -152,7 +152,7 @@ function setupFight(instance){
         instance.network.sendPingMessage();
       }
     }
-  }, 2000)
+  }, 20)
 
   // start the 20ms update loop
   // for each 20ms frame

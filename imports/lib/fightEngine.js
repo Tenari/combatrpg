@@ -47,7 +47,8 @@ export function FightEngine(fight, character, $container){
   Matter.World.add(this.world, bodies);
 
   // step forward 1 tick
-  this.update = function(network, tick){
+  this.update = function(network, tick, options){
+    if (!options) options = {render: true};
     _.each(fight.characters, function(cid) {
       let entity = that.characters[cid];
       let code = 'Remote';
@@ -61,7 +62,9 @@ export function FightEngine(fight, character, $container){
       entity.act(inputHistory, tick + 1);
     })
     Matter.Engine.update(this.physicsEngine, 20)
-    this.matchAndRender();
+    if (options.render) {
+      this.matchAndRender();
+    }
     this.tick = tick + 1;
   }
 
@@ -111,7 +114,7 @@ export function FightEngine(fight, character, $container){
 
   // Rollback if needed.
   this.handleRollbacks = function(tick, network){
-    console.log('checking to rollback')
+    console.log('checking to rollback', network.lastSyncedTick, tick, network.confirmedTick)
     // The input needed to resync state is available so rollback.
     // Network.lastSyncedTick keeps track of the lastest synced game tick.
     // When the tick count for the inputs we have is more than the number of synced ticks it's possible to rerun those game updates with a rollback.
@@ -127,7 +130,7 @@ export function FightEngine(fight, character, $container){
 
       for (let i=0; i < rollbackFrames; i += 1) {
         let lastRolledBackGameTick = this.tick;
-        this.update(network, lastRolledBackGameTick);
+        this.update(network, lastRolledBackGameTick, {render: false});
 
         // Confirm that we are indeed still synced
         if (lastRolledBackGameTick <= network.confirmedTick) {
