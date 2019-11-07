@@ -1,6 +1,6 @@
 export const BUTTONS = {
-  left: 68, // D
-  right: 65,// A
+  right: 68, // D
+  left: 65,// A
   jump: 32, // space
   down: 83, // S
 
@@ -14,7 +14,7 @@ export const MOVES = {
   light_attack: {
     key: 'light_attack',
     stages: [
-      {// in the current frame you must be pressing light
+      {
         inputs: [BUTTONS.light],
         errorInputs: [], // directional/crouching/aerial light_attack are different from light_attack, and will be higher priority. dont exclude the directional buttons here though, or people who dont know the other attacks will not be able to attack while moving which will feel bad
         link: 1,
@@ -37,29 +37,29 @@ export const MOVES = {
   dash_right: {
     key: 'dash_right',
     stages: [
-      {// in the current frame you must be pressing right
+      { // first press right
         inputs: [BUTTONS.right],
         errorInputs: [BUTTONS.left],
         link: 1,
       },
-      { // in the previous frame, you must not have been pressing any direction
+      { // then go any number of frames between 1 and 20 without pressing a direction
         inputs: [],
         errorInputs: [BUTTONS.left, BUTTONS.right],
-        link: 1,
+        link: 20,
       },
-      { // then somewhere in the next (backward in time) 20 frames you must have been pressing right without ever pressing left
+      { // then press right again
         inputs: [BUTTONS.right],
         errorInputs: [BUTTONS.left],
-        link: 20,
+        link: 1,
       },
     ],
     blockingConditions: [],
     effects: {
-      velocity: -9,
+      velocity: 9,
       frames:[1,2,3,4,5,6],
     }
   },
-  dash_left: { // see dash_right, but switch all the directional buttons
+  dash_left: {
     key: 'dash_left',
     stages: [
       {
@@ -70,17 +70,17 @@ export const MOVES = {
       {
         inputs: [],
         errorInputs: [BUTTONS.left, BUTTONS.right],
-        link: 1,
+        link: 20,
       },
       {
         inputs: [BUTTONS.left],
         errorInputs: [BUTTONS.right],
-        link: 20,
+        link: 1,
       },
     ],
     blockingConditions: [],
     effects: {
-      velocity: 9,
+      velocity: -9,
       frames:[1,2,3,4,5,6],
     }
   },
@@ -97,8 +97,9 @@ export const MOVES = {
     key: 'right',
     stages: [{inputs:[BUTTONS.right],errorInputs:[BUTTONS.left],link:1}],
     blockingConditions: [],
+    cancelable: true,
     effects: {
-      velocity: -3,
+      velocity: 3,
       frames: [{}],
     }
   },
@@ -106,8 +107,9 @@ export const MOVES = {
     key: 'left',
     stages: [{inputs:[BUTTONS.left],errorInputs:[BUTTONS.right],link:1}],
     blockingConditions: [],
+    cancelable: true,
     effects: {
-      velocity: 3,
+      velocity: -3,
       frames: [{}],
     }
   },

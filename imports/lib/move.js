@@ -35,40 +35,39 @@ import * as Matter from 'matter-js';
 
 export function Move(definition) {
   this.cancelable = definition.cancelable || false; //default not a cancelable move
-  // returns `true` if inputHistory matches the definition object for this move, `false` otherwise
-  //   expects inputHistory[0] to be current frame, [1] to be previous frame, etc
-  //   expects state to be the character state object containing statuses like {hitStun: true, dashing: false} etc
-  this.matchesInput = function(inputHistory, state) {
-    // detect blockingConditions
-    if (_.find(definition.blockingConditions, function(condition){return state[condition] == true;})) return false;
-    
-    let allStagesPassed = false;
-    let lastMatched = -1;
-    for (let stageIndex = 0; stageIndex < definition.stages.length; stageIndex += 1) {
-      let stage = definition.stages[stageIndex];
-      let currentFrame = lastMatched+1;
-      let stagePassed = false;
-      // from the currentFrame, to the limit of the stage's link, iterate to try to find a match
-      for (let inputIndex = currentFrame; inputIndex < currentFrame+stage.link; inputIndex += 1) {
-        if (stagePassed) continue;
-        let currentInput = inputHistory[inputIndex];
-        if (_.find(stage.errorInputs, function(key){ return currentInput[key];})) {
-          return false;
-        }
 
-        if (_.all(stage.inputs, function(key){ return currentInput[key]; })) { // if all stage inputs are matched, stage is passed
-          lastMatched = inputIndex;
-          stagePassed = true;
-          break;
-        }
-      }
-      if (!stagePassed) return false;
-      if (stageIndex == definition.stages.length -1 && stagePassed) {
-        return true;
-      }
+  // returns false if the input is an invalid transition from state
+  // returns the next state if input is a valid transition
+  this.next = function(state, input){
+    let stage = definition.stages[state.index];
+    if (!stage) return false;
+
+    // if ANY errorInput is currently being pressed, this is an invalid transition, return false
+    if (_.find(stage.errorInputs, function(key){ return input[key]; })) return false;
+
+    // if ALL the required inputs are currently being pressed, move to the next stage
+    if (_.all(stage.inputs,function(key){return input[key];})) {
+      return {
+        index: state.index+1,
+        waits: 0,
+      };
+    }
+
+    // if neither of the above condition is true, we are in a 'neutral' input state
+
+    // if we have been waiting longer than the move allows, return false
+    if (state.waits >= stage.link) return false;
+
+    // nothing else matches, so just increase the waits
+    return {
+      index: state.index,
+      waits: state.waits + 1,
     }
   }
 
+  this.inputChainIsComplete = function(state) {
+    return state.index+1 > definition.stages.length;
+  }
   // SIDE EFFECTS!!! This is the method that does the move on the Entity. Handles changing sprite frame, velocity, hitboxes+hurtboxes+pushboxes
   this.perform = function(entity){
     console.log(definition.key);
@@ -96,41 +95,3 @@ export function Move(definition) {
     entity.setSprite(entity.idleSprites[0]);
   }
 }
-
-/*
-let definition = { // dash right (D key)
-  stages: [
-    {
-      inputs: [65],
-      errorInputs: [68],
-      link: 1,
-    },
-    {
-      inputs: [],
-      errorInputs: [65, 68],
-      link: 1,
-    },
-    {
-      inputs: [65],
-      errorInputs: [68],
-      link: 8,
-    },
-  ],
-  blockingConditions: [],
-  effects: {
-    velocity: 9,
-  }
-}
-let history = [{65:true},{},{},{},{65:true},{65:true}];
-let history2 = [{65:true},{},{68:true},{},{65:true},{65:true}];
-let history3 = [{65:true, 68:true},{},{},{},{65:true},{65:true}];
-let history4 = [{65:true},{65:true},{},{},{}];
-var m = new Move(definition);
-console.log(m.matchesInput(history, {}))
-console.log('---')
-console.log(m.matchesInput(history2, {}))
-console.log('---')
-console.log(m.matchesInput(history3, {}))
-console.log('---')
-console.log(m.matchesInput(history4, {}))
-*/

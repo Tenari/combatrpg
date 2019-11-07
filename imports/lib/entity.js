@@ -12,15 +12,16 @@ export function Entity(options, pixiApp) {
     dashing: false,
     move: null,
     moveFrame: null, // the last perfom()ed move frame (relative to the move itself, not the global gameTick)
+    partiallyMatchedMoves: [],
   }
 
   // array in reverse priority order
   this.knownMoves = [
-    new Move(MOVES.light_attack),
-    new Move(MOVES.dash_left),
+//    new Move(MOVES.light_attack),
+//    new Move(MOVES.dash_left),
     new Move(MOVES.dash_right),
-    new Move(MOVES.jump),
-    new Move(MOVES.left),
+//    new Move(MOVES.jump),
+//    new Move(MOVES.left),
     new Move(MOVES.right)
   ];
 
@@ -91,7 +92,7 @@ export function Entity(options, pixiApp) {
   // based on the inputHistory, and our current state, do the action the user intends.
   //   handles detecting if we are hitstunned or not, if we are dashing or nomal moving, etc
   //   expects inputHistory[0] to be current frame, [1] to be previous frame, etc
-  this.act = function(inputHistory, tick) {
+  this.act = function(nextInputObj) {
     /*
       pseudo:
         if (we are NOT in a move OR we are in a cancelable move)
@@ -105,21 +106,61 @@ export function Entity(options, pixiApp) {
           perform the next frame of the move
     */
     if (!this.state.move || this.state.move.cancelable) {
+      let matched = false;
+      // handle the partiallyMatchedMoves
+      for(let j = 0; j < this.state.partiallyMatchedMoves.length; j += 1) {
+        let partialMove = this.state.partiallyMatchedMoves[j];
+        if (!partialMove) continue;
+        let moveObj = this.knownMoves[partialMove.moveIndex];
+        // return the next partialMove.state if the nextInputObj does not break the move definition
+        // return false if the nextInputObj broke the input chain
+        let nextState = moveObj.next(partialMove.state, nextInputObj);
+        if (nextState) { 
+          if (!matched && moveObj.inputChainIsComplete(nextState)) {
+            // the move's input chain is complete, so update the entity
+            this.startNewMove(moveObj, partialMove.moveIndex);
+            matched = true;
+          } else {
+            this.state.partiallyMatchedMoves[j].state = nextState;
+          }
+        } else { // nextInputObj break the input chain for the move, so remove it from the list
+          this.state.partiallyMatchedMoves[j] = null;
+        }
+      }
+
+      // remove the nulls
+      this.state.partiallyMatchedMoves = _.select(this.state.partiallyMatchedMoves, function(m){return m;});
+
+      // find new partiallyMatchedMoves
       for(let i = 0; i < this.knownMoves.length; i += 1) {
         let move = this.knownMoves[i];
-        if (move.matchesInput(inputHistory, this.state)){
-          this.state.move = move;
-          this.state.moveFrame = -1;
-          break;
+        let moveState = move.next({index: 0, waits: 0}, nextInputObj);// will be false if the input doesnt match the first stage of the move
+        if (moveState){
+          if (!matched && move.inputChainIsComplete(moveState)) {
+            // the move's input chain is complete, so update the entity
+            this.startNewMove(move);
+            matched = true;
+          } else {
+            this.state.partiallyMatchedMoves.push({
+              moveIndex: i,
+              state: moveState,
+            });
+          }
         }
       }
     }
-
 
     if (this.state.move) {
       this.state.move.perform(this);
     } else { // idle
       //this.setSprite(this.idleSprites[ Math.floor(tick/this.idleFrameRate) % this.idleSprites.length]);
     }
+  }
+
+  this.startNewMove = function(move, index) {
+    this.state.move = move;
+    this.state.moveFrame = -1;
+    if(index)
+      this.state.partiallyMatchedMoves[index] = null;
   }
 };

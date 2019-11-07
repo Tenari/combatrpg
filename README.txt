@@ -307,3 +307,32 @@ Items: all items are class limited
     head: hat, wool wide brim hat, suede wide brim hat
     body: clothes, wool robe, fine robe
 
+
+
+=====
+
+Gameloop plan
+
+remoteInputs are updated asynchronously because javascript
+fightEngine contains the game state, knows how to render a frame, and knows how to advance a frame, and knows how to rollback to a frame
+
+  1. set up connection
+  2. initiate game loop
+    3. pass local inputs to GGPO
+        a. save to local input buffer
+        b. send to remote
+    4. get inputs from GGPO for this frame
+        check and see if a new remoteInput has come in
+          if the new remoteInput does not match the predicted remoteInput for the (past) frame, ROLLBACK
+            rollback to the offending frame (load_game_state)
+            until we are caught back up,
+              call advanceGameState(inputs) with corrected input/new predicted input
+            return localInput for this frame and predictedRemoteInput for this frame
+          else (the new remoteInput DID match our predictions
+            return localInput for this frame and predictedRemoteInput for this frame
+        else
+          predict remoteInput for this frame
+        return localInput for this frame and remoteInput for this frame
+    5. advanceGameState(inputs)
+
+

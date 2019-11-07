@@ -46,6 +46,56 @@ export function FightEngine(fight, character, $container){
   })
   Matter.World.add(this.world, bodies);
 
+  // accept new inputs and simulate forward 1 tick
+  // inputs = {id: inputObject, id: inputObject} for each character
+  this.advanceGameState = function(inputs) {
+    _.each(fight.characters, function(cid) {
+      let entity = that.characters[cid];
+      if(cid == "3q2vrjgggLmJDR5uJ") {
+        console.log(entity.state.partiallyMatchedMoves[0],entity.state.partiallyMatchedMoves[1], that.tick);
+      }
+      entity.act(inputs[cid]);
+    })
+    Matter.Engine.update(this.physicsEngine, 20); // 20ms per frame
+    this.tick += 1;
+  }
+
+  // renders the current game state to the screen
+  this.render = function(){
+    _.each(this.entities, function(entity) {
+      if (entity.sprite && entity.body.position) {
+        entity.sprite.position.set(entity.body.position.x, entity.body.position.y);
+      }
+      if (entity.container && entity.body.position) {
+        entity.container.position.set(entity.body.position.x, entity.body.position.y);
+      }
+    })
+    this.pixiApp.renderer.render(this.pixiApp.stage);
+  }
+
+  // returns a snapshot of the game's current state
+  this.saveState = function(){
+    return {
+      tick: this.tick,
+      entities: _.map(this.entities, function(entity, index){
+        return JSON.stringify({index, position: entity.body.position, velocity: entity.body.velocity});
+      }),
+    };
+  }
+
+  // overwites the game's current simulation state with information passed in the `state` variable.
+  //   `state` is the same object as returned from this.saveState()
+  this.loadState = function(state) {
+    console.log('restoring state', state);
+    var that = this;
+    _.each(state.entities, function(e){
+      e = JSON.parse(e);
+      Matter.Body.setVelocity(that.entities[e.index].body, e.velocity);
+      Matter.Body.setPosition(that.entities[e.index].body, e.position);
+    })
+    this.tick = state.tick;
+  }
+
   // step forward 1 tick
   this.update = function(network, tick, options){
     if (!options) options = {render: true};

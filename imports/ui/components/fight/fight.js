@@ -1,7 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import Peer from 'peerjs';
 import { FightEngine } from '/imports/lib/fightEngine.js';
-import { Network } from '/imports/lib/network.js';
+import { GGPO } from '/imports/lib/ggpo.js';
 import { Fights } from '/imports/api/fights/fights.js';
 import { Characters } from '/imports/api/characters/characters.js';
 import { BUTTONS } from '/imports/config/moves.js';
@@ -16,8 +16,6 @@ Template.fight.onCreated(function () {
   $(window).on('keydown', handleKey(this));
   $(window).on('keyup', handleKey(this));
   this.localInput = {}; // {keyCode: boolean} mapping
-  this.tick = 1;
-  this.network = new Network({recognizedInputs: _.values(BUTTONS)});
 
   this.autorun(() => {
     var instance = this;
@@ -25,42 +23,69 @@ Template.fight.onCreated(function () {
     instance.character = character;
     if (!character) return false;
 
+    instance.fight = Fights.findOne({characters: character._id});
+    const fight = instance.fight;
+    if (!fight) return false;
+    const remoteCharacterId = _.find(fight.characters, function(cid){ return cid != character._id});
+
+    if (!this.ggpo) {
+      // fight contains the details about what entities are in the fight and the level + background etc, which are used to initialize the fight engine
+      this.fightEngine = new FightEngine(fight, character, $('#fight'));
+      this.ggpo = new GGPO({playerIds: fight.characters, remotePlayerId: remoteCharacterId, localPlayerId: character._id, fightEngine: this.fightEngine});
+    }
+
     if (!instance.peer) {
       // setup peerJS connection
       instance.peer = new Peer(character._id, {host: 'localhost', port: 9000, path: '/myapp'});
       console.log('my peer id', character._id);
       instance.peer.on('connection', function(conn){
-        instance.network.connection = conn;
-        conn.on('data', function(){ instance.network.receiveData.apply(instance.network, arguments); });
+        instance.ggpo.net.connection = conn;
+        conn.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
       })
     }
-    instance.fight = Fights.findOne({characters: character._id});
-    const fight = instance.fight;
-    if (fight) {
-      //first handle networking or ai initialization
-      // fight is either with monster or player
-      if (fight.characters.length > 1) { // two characters => peerJS connection
-        if (!instance.network.connection) {
-          instance.network.connection = instance.peer.connect(_.find(fight.characters, function(cid){return cid != character._id}));
-          instance.network.connection.on('data', function(){ instance.network.receiveData.apply(instance.network, arguments); });
-          if (fight.characters[0] == character._id) { //first character isServer
-            instance.network.startServer();
-          } else {
-            instance.network.startConnection();
-          }
+    //first handle networking or ai initialization
+    // fight is either with monster or player
+    if (fight.characters.length > 1) { // two characters => peerJS connection
+      if (!instance.ggpo.net.connection) {
+        instance.ggpo.net.connection = instance.peer.connect(remoteCharacterId);
+        instance.ggpo.net.connection.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
+        if (fight.characters[0] == character._id) { //first character isServer
+          instance.ggpo.net.startServer();
+        } else {
+          instance.ggpo.net.startConnection();
         }
-      } else { // TODO ai monster opponent initialization
       }
-
-      // then handle fight ui initialization
-      setupFight(instance);
+    } else {
+      // TODO ai monster opponent initialization
     }
+
+    // then handle fight ui initialization
+    setupFight(instance);
   })
 });
 
 function setupFight(instance){
-  // instance.fight contains the details about what entities are in the fight and the level + background etc, which are used to initialize the game engine
-  instance.fightEngine = new FightEngine(instance.fight, instance.character, $('#fight'));
+  window.setInterval(function(){
+    //console.log(instance.ggpo.tick, instance.fightEngine.tick, instance.ggpo.lastRemoteInputReceivedAt);
+    if (!instance.ggpo.net.connection) return false;
+    if (!instance.ggpo.net.connectedToClient) {
+      instance.ggpo.net.handshakeConnect();
+    }
+    if (!instance.ggpo.net.enabled) return false;
+    if (instance.ggpo.tick > 100) return false;
+
+    instance.ggpo.net.processDelayedPackets();
+    if (!instance.ggpo.net.connectedToClient) return false;
+
+    if (instance.ggpo.shouldWait()) return false;
+
+    instance.ggpo.addLocalInput(instance.character._id, instance.localInput);
+
+    const inputsForThisTick = instance.ggpo.getInputs();
+    instance.fightEngine.advanceGameState(inputsForThisTick);
+    instance.fightEngine.render();
+  }, 200)
+  /*
   window.setInterval(function(){
 //    console.log(instance.tick, instance.network.connection.connectionId, instance.network.enabled, instance.network.connectedToClient);
     if (!instance.network.connection) return false;
@@ -153,10 +178,7 @@ function setupFight(instance){
       }
     }
   }, 20)
-
-  // start the 20ms update loop
-  // for each 20ms frame
-    // Matter.Engine.update(engine, [delta=20], [correction=1]) // can ignore correction for now
+  */
 }
 
 Template.fight.onRendered(function () {
@@ -178,15 +200,7 @@ Template.fight.events({
 
 function handleKey(instance){
   return function(e) {
-    /*  key codes
-        w = 119
-        s = 115
-        d = 100
-        a = 97
-    */
-   // const direction = {100: 'right', 97: 'left'}[e.keyCode];
 //    console.log('sending to',instance.network.connection.peer, 'on connection', instance.network.connection.connectionId, e.key);
-//    instance.conn.send(e.keyCode);
     instance.localInput[e.keyCode] = e.type == 'keydown';
   }
 }
