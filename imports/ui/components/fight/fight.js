@@ -72,7 +72,7 @@ function setupFight(instance){
       instance.ggpo.net.handshakeConnect();
     }
     if (!instance.ggpo.net.enabled) return false;
-    if (instance.ggpo.tick > 100) return false;
+    //if (instance.ggpo.tick > 100) return false;
 
     instance.ggpo.net.processDelayedPackets();
     if (!instance.ggpo.net.connectedToClient) return false;
@@ -84,7 +84,7 @@ function setupFight(instance){
     const inputsForThisTick = instance.ggpo.getInputs();
     instance.fightEngine.advanceGameState(inputsForThisTick);
     instance.fightEngine.render();
-  }, 200)
+  }, 20)
   /*
   window.setInterval(function(){
 //    console.log(instance.tick, instance.network.connection.connectionId, instance.network.enabled, instance.network.connectedToClient);

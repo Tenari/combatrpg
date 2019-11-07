@@ -99,6 +99,10 @@ export function GGPO(options, callbacks) {
         // now, for each frame we rolled back, generate the inputs and re-simulate the game
         while (this.tick < presentTick) {
           let inputs = {};
+          // save the state of the engine at the most recently "valid" tick
+          if (this.tick == this.lastRemoteInputReceivedAt) {
+            this.lastSavedState = options.fightEngine.saveState();
+          }
           inputs[options.localPlayerId] = this.decodeInput(this.inputHistory[options.localPlayerId][this.tick % options.INPUT_HISTORY_SIZE]);
           inputs[options.remotePlayerId] = this.decodeInput(this.predictNextInput());
           options.fightEngine.advanceGameState(inputs)

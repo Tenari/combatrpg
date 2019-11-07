@@ -17,11 +17,11 @@ export function Entity(options, pixiApp) {
 
   // array in reverse priority order
   this.knownMoves = [
-//    new Move(MOVES.light_attack),
-//    new Move(MOVES.dash_left),
+    new Move(MOVES.light_attack),
+    new Move(MOVES.dash_left),
     new Move(MOVES.dash_right),
-//    new Move(MOVES.jump),
-//    new Move(MOVES.left),
+    new Move(MOVES.jump),
+    new Move(MOVES.left),
     new Move(MOVES.right)
   ];
 
@@ -105,12 +105,18 @@ export function Entity(options, pixiApp) {
         if this.state.move // if we are in a move, (possibly newly)
           perform the next frame of the move
     */
+    let logPartial = _.find(this.state.partiallyMatchedMoves, function(m){return m.moveIndex === 0});
+    if (logPartial)
+      console.log(options.id, nextInputObj[68], logPartial.moveIndex, logPartial.state.index, logPartial.state.waits);
+
     if (!this.state.move || this.state.move.cancelable) {
       let matched = false;
+      let checked = [];
       // handle the partiallyMatchedMoves
       for(let j = 0; j < this.state.partiallyMatchedMoves.length; j += 1) {
         let partialMove = this.state.partiallyMatchedMoves[j];
         if (!partialMove) continue;
+        checked.push(partialMove.moveIndex);
         let moveObj = this.knownMoves[partialMove.moveIndex];
         // return the next partialMove.state if the nextInputObj does not break the move definition
         // return false if the nextInputObj broke the input chain
@@ -118,7 +124,7 @@ export function Entity(options, pixiApp) {
         if (nextState) { 
           if (!matched && moveObj.inputChainIsComplete(nextState)) {
             // the move's input chain is complete, so update the entity
-            this.startNewMove(moveObj, partialMove.moveIndex);
+            this.startNewMove(moveObj, j);
             matched = true;
           } else {
             this.state.partiallyMatchedMoves[j].state = nextState;
@@ -133,6 +139,7 @@ export function Entity(options, pixiApp) {
 
       // find new partiallyMatchedMoves
       for(let i = 0; i < this.knownMoves.length; i += 1) {
+        if (_.contains(checked, i)) continue;
         let move = this.knownMoves[i];
         let moveState = move.next({index: 0, waits: 0}, nextInputObj);// will be false if the input doesnt match the first stage of the move
         if (moveState){
@@ -158,9 +165,10 @@ export function Entity(options, pixiApp) {
   }
 
   this.startNewMove = function(move, index) {
+    console.log('startNewMove', move.key, index, this.state.partiallyMatchedMoves[index])
     this.state.move = move;
     this.state.moveFrame = -1;
-    if(index)
+    if(index != undefined)
       this.state.partiallyMatchedMoves[index] = null;
   }
 };

@@ -34,6 +34,7 @@
 import * as Matter from 'matter-js';
 
 export function Move(definition) {
+  this.key = definition.key;
   this.cancelable = definition.cancelable || false; //default not a cancelable move
 
   // returns false if the input is an invalid transition from state
@@ -70,12 +71,12 @@ export function Move(definition) {
   }
   // SIDE EFFECTS!!! This is the method that does the move on the Entity. Handles changing sprite frame, velocity, hitboxes+hurtboxes+pushboxes
   this.perform = function(entity){
-    console.log(definition.key);
     const nextFrame = entity.state.moveFrame + 1;
     const newFrame = definition.effects.frames[nextFrame];
     if (!newFrame) {
       return this.finish(entity);
     }
+    console.log(definition.key);
     if (definition.effects.velocity) {
       Matter.Body.setVelocity(entity.body, Matter.Vector.create(definition.effects.velocity, entity.body.velocity.y));
     }

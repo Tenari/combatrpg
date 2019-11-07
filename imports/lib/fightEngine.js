@@ -51,9 +51,6 @@ export function FightEngine(fight, character, $container){
   this.advanceGameState = function(inputs) {
     _.each(fight.characters, function(cid) {
       let entity = that.characters[cid];
-      if(cid == "3q2vrjgggLmJDR5uJ") {
-        console.log(entity.state.partiallyMatchedMoves[0],entity.state.partiallyMatchedMoves[1], that.tick);
-      }
       entity.act(inputs[cid]);
     })
     Matter.Engine.update(this.physicsEngine, 20); // 20ms per frame
@@ -78,7 +75,12 @@ export function FightEngine(fight, character, $container){
     return {
       tick: this.tick,
       entities: _.map(this.entities, function(entity, index){
-        return JSON.stringify({index, position: entity.body.position, velocity: entity.body.velocity});
+        return JSON.stringify({
+          index,
+          position: entity.body.position,
+          velocity: entity.body.velocity,
+          partiallyMatchedMoves: entity.state.partiallyMatchedMoves,
+        });
       }),
     };
   }
@@ -92,6 +94,7 @@ export function FightEngine(fight, character, $container){
       e = JSON.parse(e);
       Matter.Body.setVelocity(that.entities[e.index].body, e.velocity);
       Matter.Body.setPosition(that.entities[e.index].body, e.position);
+      that.entities[e.index].state.partiallyMatchedMoves = e.partiallyMatchedMoves;
     })
     this.tick = state.tick;
   }

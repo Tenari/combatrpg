@@ -40,17 +40,17 @@ export const MOVES = {
       { // first press right
         inputs: [BUTTONS.right],
         errorInputs: [BUTTONS.left],
-        link: 1,
+        link: 0,
       },
       { // then go any number of frames between 1 and 20 without pressing a direction
         inputs: [],
         errorInputs: [BUTTONS.left, BUTTONS.right],
-        link: 20,
+        link: 0,
       },
       { // then press right again
         inputs: [BUTTONS.right],
         errorInputs: [BUTTONS.left],
-        link: 1,
+        link: 20,
       },
     ],
     blockingConditions: [],
@@ -65,17 +65,17 @@ export const MOVES = {
       {
         inputs: [BUTTONS.left],
         errorInputs: [BUTTONS.right],
-        link: 1,
+        link: 0,
       },
       {
         inputs: [],
         errorInputs: [BUTTONS.left, BUTTONS.right],
-        link: 20,
+        link: 0,
       },
       {
         inputs: [BUTTONS.left],
         errorInputs: [BUTTONS.right],
-        link: 1,
+        link: 20,
       },
     ],
     blockingConditions: [],
@@ -95,7 +95,7 @@ export const MOVES = {
   },
   right: {
     key: 'right',
-    stages: [{inputs:[BUTTONS.right],errorInputs:[BUTTONS.left],link:1}],
+    stages: [{inputs:[BUTTONS.right],errorInputs:[BUTTONS.left],link:0}],
     blockingConditions: [],
     cancelable: true,
     effects: {
@@ -105,7 +105,7 @@ export const MOVES = {
   },
   left: {
     key: 'left',
-    stages: [{inputs:[BUTTONS.left],errorInputs:[BUTTONS.right],link:1}],
+    stages: [{inputs:[BUTTONS.left],errorInputs:[BUTTONS.right],link:0}],
     blockingConditions: [],
     cancelable: true,
     effects: {
