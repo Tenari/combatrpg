@@ -336,3 +336,14 @@ fightEngine contains the game state, knows how to render a frame, and knows how 
     5. advanceGameState(inputs)
 
 
+==================
+
+wuxia setting is good fit for this game
+
+- collect chi from killing monsters
+- cultivate chi to expant your dantian or to attempt to ascend to the next level
+- each level up your character gains one open move slot and some stats
+- find manuals or try to invent your own moves to fill your character's move slots
+- some moves require weapons
+- alchemy to create pills requires combining rare ingredients. the game mechanic is hex color addition. Each ingredient has it's own color, and quantity. The more other ingredients there are already in the pot, the less adding your next ingredient will move the color toward the ingredient's color. Additionally, temperature must be controlled, and if it is too hot, the color drifts up and if it is too cold, the color drifts down, more rapidly the more distant temperature is from where it should be. Each recipie for a pill requires getting a pot to a certain color range and holding it there for a certain amount of time. More complex pills may require multiple stages, like get to blue, hold for a while, get to red, hold for a while, etc, which represents an ideal "color path" of correct color over time. The area under the curve difference between the ideal color path and the actual color path taken determines the quality of the pill(s) produced. The quantity of ingredients used determines how many pills are created at once. This system means that multiple ingredient combinations can be used to produce the same pill
+

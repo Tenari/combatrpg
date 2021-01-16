@@ -36,9 +36,10 @@ Template.fight.onCreated(function () {
 
     if (!instance.peer) {
       // setup peerJS connection
-      instance.peer = new Peer(character._id, {host: 'localhost', port: 9000, path: '/myapp'});
+      instance.peer = new Peer(character._id, {host: '178.128.128.131', port: 9000, path: '/myapp'});
       console.log('my peer id', character._id);
       instance.peer.on('connection', function(conn){
+        console.log('connection event');
         instance.ggpo.net.connection = conn;
         conn.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
       })
@@ -47,12 +48,14 @@ Template.fight.onCreated(function () {
     // fight is either with monster or player
     if (fight.characters.length > 1) { // two characters => peerJS connection
       if (!instance.ggpo.net.connection) {
-        instance.ggpo.net.connection = instance.peer.connect(remoteCharacterId);
-        instance.ggpo.net.connection.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
         if (fight.characters[0] == character._id) { //first character isServer
+          console.log('calling peer.connect on '+ remoteCharacterId);
+          instance.ggpo.net.connection = instance.peer.connect(remoteCharacterId);
+          instance.ggpo.net.connection.on('open', function(){ console.log('opened') });
+          instance.ggpo.net.connection.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
           instance.ggpo.net.startServer();
         } else {
-          instance.ggpo.net.startConnection();
+          //instance.ggpo.net.startConnection();
         }
       }
     } else {
@@ -76,6 +79,7 @@ function setupFight(instance){
 
     instance.ggpo.net.processDelayedPackets();
     if (!instance.ggpo.net.connectedToClient) return false;
+    console.log('4');
 
     if (instance.ggpo.shouldWait()) return false;
 

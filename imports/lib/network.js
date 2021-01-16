@@ -90,12 +90,14 @@ export function Network(ggpo, options) {
 
   // the function that the peerJS connection.on('data') should run when data from the peer comes in
   this.receiveData = function(data) {
+    console.log(data);
     if (!this.enabled) return false;
 
     const code = data.code;
 
     // Handshake code must be received by both game instances before a match can begin.
     if (code == msgCode.handshake) {
+      console.log('got a handshake packet');
       if(!this.connectedToClient) {
         this.connectedToClient = true;
 

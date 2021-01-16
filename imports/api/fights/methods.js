@@ -15,4 +15,10 @@ Meteor.methods({
     }
     Fights.update(fight._id, fight);
   },
+  'fights.signal'(id, sig) {
+    Fights.update(id, {$set:{signal: sig}})
+  },
+  'fights.answer'(id, sig) {
+    Fights.update(id, {$set:{answer: sig}})
+  }
 });
