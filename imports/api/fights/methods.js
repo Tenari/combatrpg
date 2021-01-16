@@ -15,10 +15,19 @@ Meteor.methods({
     }
     Fights.update(fight._id, fight);
   },
-  'fights.signal'(id, sig) {
-    Fights.update(id, {$set:{signal: sig}})
+  'fights.offer'(id, sig) {
+    Fights.update(id, {$set:{offer: sig, offeredAt: Date.now()}})
   },
   'fights.answer'(id, sig) {
-    Fights.update(id, {$set:{answer: sig}})
-  }
+    Fights.update(id, {$set:{answer: sig, answeredAt: Date.now()}})
+  },
+  'fights.usedOffer'(id) {
+    Fights.update(id, {$unset:{offer: ""}})
+  },
+  'fights.usedAnswer'(id) {
+    Fights.update(id, {$unset:{answer: ""}})
+  },
+  'fights.connected'(id) {
+    Fights.update(id, {$unset:{answer: "", offer: ""}})
+  },
 });
