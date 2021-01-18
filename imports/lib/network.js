@@ -69,7 +69,7 @@ export function Network(ggpo, options) {
   }
   // Send a packet immediately
   this.sendPacketRaw = function(packet) {
-    this.connection.send(packet);
+    this.connection.send(JSON.stringify(packet));
   }
 
   // Send all packets which have been queued and who's delay time has elapsed.
@@ -90,6 +90,7 @@ export function Network(ggpo, options) {
 
   // the function that the peerJS connection.on('data') should run when data from the peer comes in
   this.receiveData = function(data) {
+    data = JSON.parse(data);
     console.log(data);
     if (!this.enabled) return false;
 

@@ -1,5 +1,5 @@
 import { Meteor } from 'meteor/meteor';
-import Peer from 'peerjs';
+import Peer from 'simple-peer';
 import { FightEngine } from '/imports/lib/fightEngine.js';
 import { GGPO } from '/imports/lib/ggpo.js';
 import { Fights } from '/imports/api/fights/fights.js';
@@ -34,32 +34,45 @@ Template.fight.onCreated(function () {
       this.ggpo = new GGPO({playerIds: fight.characters, remotePlayerId: remoteCharacterId, localPlayerId: character._id, fightEngine: this.fightEngine});
     }
 
-    if (!instance.peer) {
-      // setup peerJS connection
-      instance.peer = new Peer(character._id, {host: '178.128.128.131', port: 9000, path: '/myapp'});
-      console.log('my peer id', character._id);
-      instance.peer.on('connection', function(conn){
-        console.log('connection event');
-        instance.ggpo.net.connection = conn;
-        conn.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
+    const isInitiator = fight.characters[0] == character._id;
+
+    if (!instance.peer && fight.fighterCount == 2) {
+      instance.peer = new Peer({
+        initiator: isInitiator,
+        trickle: false,
+        config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478?transport=udp' },{ username: 'pooperson', urls: 'turn:165.22.135.241:3478', credential: 'peepeepoopoogross' }] },
+      });
+
+      instance.peer.on('error', err => console.log('error', err));
+
+      instance.peer.on('signal', data => {
+        console.log('SIGNAL', JSON.stringify(data));
+        if (data.type == 'offer') Meteor.call('fights.offer', fight._id, JSON.stringify(data));
+        if (data.type == 'answer') Meteor.call('fights.answer', fight._id, JSON.stringify(data));
       })
-    }
-    //first handle networking or ai initialization
-    // fight is either with monster or player
-    if (fight.characters.length > 1) { // two characters => peerJS connection
-      if (!instance.ggpo.net.connection) {
-        if (fight.characters[0] == character._id) { //first character isServer
-          console.log('calling peer.connect on '+ remoteCharacterId);
-          instance.ggpo.net.connection = instance.peer.connect(remoteCharacterId);
-          instance.ggpo.net.connection.on('open', function(){ console.log('opened') });
-          instance.ggpo.net.connection.on('data', function(){ instance.ggpo.net.receiveData.apply(instance.ggpo.net, arguments); });
+
+      instance.peer.on('connect', ()=>{
+        console.log("CONNECTED")
+        instance.connected = true;
+        instance.ggpo.net.connection = instance.peer;
+        if (isInitiator) {
           instance.ggpo.net.startServer();
         } else {
-          //instance.ggpo.net.startConnection();
+          instance.ggpo.net.startConnection();
         }
-      }
-    } else {
-      // TODO ai monster opponent initialization
+      })
+      instance.peer.on('data', data => {
+        instance.ggpo.net.receiveData(data);
+      })
+    }
+
+    if (instance.peer && !isInitiator && fight.offer && !instance.connected) {
+      instance.peer.signal(JSON.parse(fight.offer))
+      Meteor.call('fights.usedOffer', fight._id);
+    }
+    if (instance.peer && isInitiator && fight.answer && !instance.connected) {
+      instance.peer.signal(JSON.parse(fight.answer))
+      Meteor.call('fights.usedAnswer', fight._id);
     }
 
     // then handle fight ui initialization
@@ -79,7 +92,6 @@ function setupFight(instance){
 
     instance.ggpo.net.processDelayedPackets();
     if (!instance.ggpo.net.connectedToClient) return false;
-    console.log('4');
 
     if (instance.ggpo.shouldWait()) return false;
 
