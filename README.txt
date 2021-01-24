@@ -1,3 +1,12 @@
+# Setup
+
+```
+  git clone https://github.com/Tenari/combatrpg.git
+  cd combatrpg
+  curl https://install.meteor.com/ | sh
+  meteor
+```
+
 potential names:
 - Fantasy Fighter RPG
 - The tournament Arc
