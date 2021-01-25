@@ -25,8 +25,6 @@ export function Network(ggpo, options) {
 
   // Setup a network connection and connect to the server.
   this.startConnection = function() {
-    console.log("Starting Network")
-
     this.enabled = true;
     this.isServer = false;
 
@@ -41,8 +39,6 @@ export function Network(ggpo, options) {
 
   // Setup a network connection as the server then wait for a client to connect.
   this.startServer = function() {
-    console.log("Starting Server")
-
     this.enabled = true;
     this.isServer = true;
 
@@ -91,14 +87,13 @@ export function Network(ggpo, options) {
   // the function that the peerJS connection.on('data') should run when data from the peer comes in
   this.receiveData = function(data) {
     data = JSON.parse(data);
-    console.log(data);
+    //console.log(data);
     if (!this.enabled) return false;
 
     const code = data.code;
 
     // Handshake code must be received by both game instances before a match can begin.
     if (code == msgCode.handshake) {
-      console.log('got a handshake packet');
       if(!this.connectedToClient) {
         this.connectedToClient = true;
 
@@ -110,6 +105,7 @@ export function Network(ggpo, options) {
       const receivedTick = data.tick;
       // dont bother if this packet is old
       if (receivedTick > ggpo.lastRemoteInputReceivedAt) {
+        console.log(data.inputs);
         // data.inputs is an array of encoded inputState numbers starting with the receivedTick and progressing back in time
         _.each(data.inputs, function(inputNumber, index){
           ggpo.addRemoteInput(receivedTick-index, inputNumber); // update our record of the remote's inputs

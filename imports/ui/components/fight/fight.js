@@ -1,4 +1,5 @@
 import { Meteor } from 'meteor/meteor';
+import { ReactiveDict } from 'meteor/reactive-dict';
 import Peer from 'simple-peer';
 import { FightEngine } from '/imports/lib/fightEngine.js';
 import { GGPO } from '/imports/lib/ggpo.js';
@@ -16,6 +17,7 @@ Template.fight.onCreated(function () {
   $(window).on('keydown', handleKey(this));
   $(window).on('keyup', handleKey(this));
   this.localInput = {}; // {keyCode: boolean} mapping
+  this.logs = new ReactiveDict();
 
   this.autorun(() => {
     var instance = this;
@@ -31,10 +33,11 @@ Template.fight.onCreated(function () {
     if (!this.ggpo) {
       // fight contains the details about what entities are in the fight and the level + background etc, which are used to initialize the fight engine
       this.fightEngine = new FightEngine(fight, character, $('#fight'));
-      this.ggpo = new GGPO({playerIds: fight.characters, remotePlayerId: remoteCharacterId, localPlayerId: character._id, fightEngine: this.fightEngine});
+      this.ggpo = new GGPO({playerIds: fight.characters, remotePlayerId: remoteCharacterId, localPlayerId: character._id, fightEngine: this.fightEngine, instance: instance});
     }
 
     const isInitiator = fight.characters[0] == character._id;
+    instance.isInitiator = isInitiator;
 
     if (!instance.peer && fight.fighterCount == 2) {
       instance.peer = new Peer({
@@ -69,19 +72,31 @@ Template.fight.onCreated(function () {
     if (instance.peer && !isInitiator && fight.offer && !instance.connected) {
       instance.peer.signal(JSON.parse(fight.offer))
       Meteor.call('fights.usedOffer', fight._id);
+      // then handle fight ui initialization
+      setupFight(instance);
     }
     if (instance.peer && isInitiator && fight.answer && !instance.connected) {
       instance.peer.signal(JSON.parse(fight.answer))
       Meteor.call('fights.usedAnswer', fight._id);
+      // then handle fight ui initialization
+      setupFight(instance);
     }
-
-    // then handle fight ui initialization
-    setupFight(instance);
   })
 });
 
+function inputLogFriendly(inputs) {
+  let obj = {};
+  let keys = _.keys(inputs).sort();
+  obj.a = inputs[keys[0]];
+  obj.b = inputs[keys[1]];
+  return JSON.stringify(obj);
+}
+
 function setupFight(instance){
+  instance.frameByFrame = true;
+  instance.hist = [];
   window.setInterval(function(){
+    if (instance.frameByFrame && instance.localInput['90'] != true) {return false;}
     //console.log(instance.ggpo.tick, instance.fightEngine.tick, instance.ggpo.lastRemoteInputReceivedAt);
     if (!instance.ggpo.net.connection) return false;
     if (!instance.ggpo.net.connectedToClient) {
@@ -94,13 +109,29 @@ function setupFight(instance){
     if (!instance.ggpo.net.connectedToClient) return false;
 
     if (instance.ggpo.shouldWait()) return false;
+    if (instance.ggpo.lastRemoteInputReceivedAt >= instance.ggpo.tick) {
+      instance.ggpo.lastSavedState = instance.fightEngine.saveState();
+    }
+    instance.ggpo.archiveState();
 
     instance.ggpo.addLocalInput(instance.character._id, instance.localInput);
 
     const inputsForThisTick = instance.ggpo.getInputs();
     instance.fightEngine.advanceGameState(inputsForThisTick);
     instance.fightEngine.render();
-  }, 20)
+
+    instance.logs.set('tick', instance.ggpo.tick);
+    instance.logs.set('lastRemoteInputReceivedAt', instance.ggpo.lastRemoteInputReceivedAt);
+    instance.logs.set('firstPredicted', instance.ggpo.firstPredictedRemoteInputTick);
+    instance.logs.set('lastSavedState.tick', instance.ggpo.lastSavedState.tick);
+    instance.logs.set('lastSavedState.entities', instance.ggpo.lastSavedState.entities.join("<br/>"));
+    instance.logs.set('inputA', _.values(instance.ggpo.inputHistory)[0]);
+    instance.logs.set('inputB', _.values(instance.ggpo.inputHistory)[1]);
+    instance.logs.set('predictions', instance.ggpo.predictions);
+
+    instance.hist.push("<div>"+instance.ggpo.tick+": "+inputLogFriendly(inputsForThisTick)+"</div>");
+    instance.logs.set('historyString', instance.hist.join(' '));
+  }, 100)
   /*
   window.setInterval(function(){
 //    console.log(instance.tick, instance.network.connection.connectionId, instance.network.enabled, instance.network.connectedToClient);
@@ -201,6 +232,9 @@ Template.fight.onRendered(function () {
 });
 
 Template.fight.helpers({
+  logs(key) {
+    return Template.instance().logs.get(key);
+  }
 });
 
 Template.fight.events({
@@ -218,5 +252,6 @@ function handleKey(instance){
   return function(e) {
 //    console.log('sending to',instance.network.connection.peer, 'on connection', instance.network.connection.connectionId, e.key);
     instance.localInput[e.keyCode] = e.type == 'keydown';
+    instance.logs.set('localInput', JSON.stringify(instance.localInput));
   }
 }

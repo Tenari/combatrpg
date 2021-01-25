@@ -1,3 +1,19 @@
 <template name="fight">
-  <div id="fight"></div>
+  <div class="flex-container">
+    <div id="fight"></div>
+    <div class="stats">
+      <div>{{{logs 'historyString'}}}</div>
+    </div>
+  </div>
+  <div>
+    <p>Tick: {{logs 'tick'}}</p>
+    <p>LocalInput: {{logs 'localInput'}}</p>
+    <p>last remote input received at: {{logs 'lastRemoteInputReceivedAt'}}</p>
+    <p>first predicted: {{logs 'firstPredicted'}}</p>
+    <p>inputA: {{logs 'inputA'}}</p>
+    <p>predictions: {{logs 'predictions'}}</p>
+    <p>inputB: {{logs 'inputB'}}</p>
+    <p>last saved state tick: {{logs 'lastSavedState.tick'}}</p>
+    <p>last saved state entities: {{{logs 'lastSavedState.entities'}}}</p>
+  </div>
 </template>

@@ -43,6 +43,7 @@ export function GGPO(options, callbacks) {
   this.firstPredictedRemoteInputTick = -1;  // the first tick when we had to predict an input. updated everytime we predit a new input
   this.predictions = [];                    // a ring buffer storing the predictions we are forced to make, so we can compare when we get the real inputs
   this.lastSavedState = null;
+  this.pastStates = [];
   this.net = new Network(this, {
     SEND_HISTORY_SIZE: options.SEND_HISTORY_SIZE,
     INPUT_HISTORY_SIZE: options.INPUT_HISTORY_SIZE,
@@ -57,6 +58,14 @@ export function GGPO(options, callbacks) {
     this.inputHistory[id][this.tick % options.INPUT_HISTORY_SIZE] = inputNumber;
     // send it to the other player(s)
     this.net.sendInputPacket(this.inputHistory, id, this.tick);
+  }
+  
+  function inputLogFriendly(inputs) {
+    let obj = {};
+    let keys = _.keys(inputs).sort();
+    obj.a = inputs[keys[0]];
+    obj.b = inputs[keys[1]];
+    return JSON.stringify(obj);
   }
 
   // this.net should call this when it recieves new input from the remote in the receiveData() function
@@ -94,8 +103,10 @@ export function GGPO(options, callbacks) {
       // if the new remoteInput does not match the predicted remoteInput for the (past) frame, ROLLBACK
       if (this.inputPredictionMismatch()) {
         options.fightEngine.loadState(this.lastSavedState); // ROLLBACK
+        console.log('ROLLING BACK NOW', this.tick, this.lastSavedState.tick, this.inputHistory)
+        options.instance.hist.splice(this.lastSavedState.tick - this.tick);
         this.tick = this.lastSavedState.tick;
-        this.firstPredictedRemoteInputTick = -1; // reset this to the null value, so that predictNextInput() will overwrite it the first time it actually predicts something
+        this.firstPredictedRemoteInputTick = -1; // reset this to the null value, so that getOrPredictNextInput() will overwrite it the first time it actually predicts something
         // now, for each frame we rolled back, generate the inputs and re-simulate the game
         while (this.tick < presentTick) {
           let inputs = {};
@@ -104,14 +115,22 @@ export function GGPO(options, callbacks) {
             this.lastSavedState = options.fightEngine.saveState();
           }
           inputs[options.localPlayerId] = this.decodeInput(this.inputHistory[options.localPlayerId][this.tick % options.INPUT_HISTORY_SIZE]);
-          inputs[options.remotePlayerId] = this.decodeInput(this.predictNextInput());
+          inputs[options.remotePlayerId] = this.decodeInput(this.getOrPredictNextInput());
           options.fightEngine.advanceGameState(inputs)
           this.tick += 1;
+          options.instance.hist.push("<div>"+this.tick+": "+inputLogFriendly(inputs)+"</div>");
         }
-      } // else our predictions matched the actual input! yay
-    } 
+      } else { // else our predictions matched the actual input! yay
+        if (this.tick > this.lastRemoteInputReceivedAt) {
+          this.firstPredictedRemoteInputTick = this.lastRemoteInputReceivedAt; // our previous "predictions" are confirmed, so move the firstPredicted marker to the last received
+          this.lastSavedState = this.pastStates[this.lastRemoteInputReceivedAt % (options.ROLLBACK_MAX_FRAMES+1)]; // read the last good state we know about from the pastStates buffer
+        } else {
+          this.lastSavedState = options.fightEngine.saveState();
+        }
+      }
+    }
     // whether this is a prediction mismatch or not we need to end this block with this call, since we need to figure out the input for the next tick
-    remoteInput = this.predictNextInput(); // so just predict the next input and we're done
+    remoteInput = this.getOrPredictNextInput(); // so just predict the next input and we're done
 
     this.tick += 1;
 
@@ -124,6 +143,10 @@ export function GGPO(options, callbacks) {
   // true if we have predicted ROLLBACK_MAX_FRAMES times in a row. continuing to predict from here on is stupid. just wait for the network
   this.shouldWait = function(){
     return this.tick - this.lastRemoteInputReceivedAt > options.ROLLBACK_MAX_FRAMES;
+  }
+
+  this.archiveState = function(){
+    this.pastStates[this.tick % (options.ROLLBACK_MAX_FRAMES+1)] = options.fightEngine.saveState();
   }
 
   ////////////////// PRIVATE FUNCTIONS (HELPERS) //////////////////////
@@ -153,7 +176,8 @@ export function GGPO(options, callbacks) {
     let mismatch = false;
     for (let i = 0; i < ticksToCheck; i += 1) {
       let index = (this.firstPredictedRemoteInputTick + i) % options.INPUT_HISTORY_SIZE;
-      if (this.predictions[index] && this.predictions[index] != this.inputHistory[options.remotePlayerId][index]) { // MISMATCH
+      if (this.predictions[index] != null && this.predictions[index] != this.inputHistory[options.remotePlayerId][index]) { // MISMATCH
+        console.log('mismatch: ', this.predictions[index], this.inputHistory[options.remotePlayerId][index], "index: "+index);
         mismatch = true;
         i = ticksToCheck; // dont need to check the rest
       }
@@ -161,7 +185,7 @@ export function GGPO(options, callbacks) {
     return mismatch;
   }
 
-  this.predictNextInput = function(){
+  this.getOrPredictNextInput = function(){
     if (!options.remotePlayerId) throw "MISSING MANDATORY FIELD: options.remotePlayerId";
 
     if (this.tick <= this.lastRemoteInputReceivedAt) { // if we actually have the real remote input, we don't actuall need to predict, so just return the real input
@@ -170,7 +194,10 @@ export function GGPO(options, callbacks) {
     }
 
     // predict the previous frame or (0 (for nothing) if it's the first frame)
-    const prediction = this.inputHistory[options.remotePlayerId][(this.tick-1) % options.INPUT_HISTORY_SIZE] || 0;
+    let prediction = this.predictions[(this.tick-1) % options.INPUT_HISTORY_SIZE] || 0;
+    if (this.lastRemoteInputReceivedAt >= this.tick-1) {
+      prediction = this.inputHistory[options.remotePlayerId][(this.lastRemoteInputReceivedAt) % options.INPUT_HISTORY_SIZE] || 0;
+    }
     this.predictions[this.tick % options.INPUT_HISTORY_SIZE] = prediction; // save the prediction for checking if it matches input later
     if (this.firstPredictedRemoteInputTick == -1) {
       this.firstPredictedRemoteInputTick = this.tick;

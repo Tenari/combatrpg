@@ -1,7 +1,7 @@
-import * as Matter from 'matter-js';
 import * as PIXI from 'pixi.js';
 import { MOVES } from '/imports/config/moves.js';
 import { Move } from '/imports/lib/move.js';
+import { Body } from '/imports/lib/physics/body.js';
 
 export function Entity(options, pixiApp) {
   let that = this;
@@ -86,8 +86,18 @@ export function Entity(options, pixiApp) {
     })
   }
 
-  // create the Matter.Body relevant for the entityState passed in
-  this.body = Matter.Bodies.rectangle(options.x, options.y, options.width, options.height, options.matterOptions);
+  // create the physics Body relevant for the entityState passed in
+  this.body = new Body({
+    x: options.x,
+    y: options.y,
+    verts: [
+      {x: options.x, y: options.y},
+      {x: options.x, y: options.y + options.height},
+      {x: options.x + options.width, y: options.y},
+      {x: options.x + options.width, y: options.y + options.height},
+    ],
+    isStatic: options.matterOptions && options.matterOptions.isStatic,
+  });
 
   // based on the inputHistory, and our current state, do the action the user intends.
   //   handles detecting if we are hitstunned or not, if we are dashing or nomal moving, etc
@@ -106,8 +116,9 @@ export function Entity(options, pixiApp) {
           perform the next frame of the move
     */
     let logPartial = _.find(this.state.partiallyMatchedMoves, function(m){return m.moveIndex === 0});
-    if (logPartial)
-      console.log(options.id, nextInputObj[68], logPartial.moveIndex, logPartial.state.index, logPartial.state.waits);
+    if (logPartial) {
+      //console.log(options.id, nextInputObj[68], logPartial.moveIndex, logPartial.state.index, logPartial.state.waits);
+    }
 
     if (!this.state.move || this.state.move.cancelable) {
       let matched = false;

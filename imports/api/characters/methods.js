@@ -12,7 +12,7 @@ Meteor.methods({
     const fight = Fights.findOne({fighterCount: 1})
     let character = {
       type: 'character', id: cid,
-      x: 100, y: 10, height: 192, width: 192,
+      x: 100, y: 422, height: 192, width: 192,
     };
     if (fight) {
       character.x = 400;

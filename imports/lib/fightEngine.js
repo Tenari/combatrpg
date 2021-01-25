@@ -1,6 +1,6 @@
-import * as Matter from 'matter-js';
 import * as PIXI from 'pixi.js';
 import { Entity } from '/imports/lib/entity.js';
+import { Engine } from '/imports/lib/physics/engine.js';
 
 export function FightEngine(fight, character, $container){
   var that = this;
@@ -38,13 +38,12 @@ export function FightEngine(fight, character, $container){
     })
   })
 
-  // Matter-js physics engine setup
-  this.physicsEngine = Matter.Engine.create();
-  this.world = this.physicsEngine.world;
+  // physics engine setup
+  this.physicsEngine = new Engine();
   var bodies = _.map(this.entities, function(entity){
     return entity.body;
   })
-  Matter.World.add(this.world, bodies);
+  this.physicsEngine.addToWorld(bodies);
 
   // accept new inputs and simulate forward 1 tick
   // inputs = {id: inputObject, id: inputObject} for each character
@@ -53,18 +52,18 @@ export function FightEngine(fight, character, $container){
       let entity = that.characters[cid];
       entity.act(inputs[cid]);
     })
-    Matter.Engine.update(this.physicsEngine, 20); // 20ms per frame
+    this.physicsEngine.update(20); // 20ms per frame
     this.tick += 1;
   }
 
   // renders the current game state to the screen
   this.render = function(){
     _.each(this.entities, function(entity) {
-      if (entity.sprite && entity.body.position) {
-        entity.sprite.position.set(entity.body.position.x, entity.body.position.y);
+      if (entity.sprite && entity.body.pos) {
+        entity.sprite.position.set(entity.body.pos.x, entity.body.pos.y);
       }
-      if (entity.container && entity.body.position) {
-        entity.container.position.set(entity.body.position.x, entity.body.position.y);
+      if (entity.container && entity.body.pos) {
+        entity.container.position.set(entity.body.pos.x, entity.body.pos.y);
       }
     })
     this.pixiApp.renderer.render(this.pixiApp.stage);
@@ -77,8 +76,9 @@ export function FightEngine(fight, character, $container){
       entities: _.map(this.entities, function(entity, index){
         return JSON.stringify({
           index,
-          position: entity.body.position,
+          pos: entity.body.pos,
           velocity: entity.body.velocity,
+          posPrev: entity.body.posPrev,
           partiallyMatchedMoves: entity.state.partiallyMatchedMoves,
         });
       }),
@@ -92,12 +92,17 @@ export function FightEngine(fight, character, $container){
     var that = this;
     _.each(state.entities, function(e){
       e = JSON.parse(e);
-      Matter.Body.setVelocity(that.entities[e.index].body, e.velocity);
-      Matter.Body.setPosition(that.entities[e.index].body, e.position);
+      that.entities[e.index].body.velocity = e.velocity;
+      that.entities[e.index].body.pos = e.pos;
+      that.entities[e.index].body.posPrev = e.posPrev;
       that.entities[e.index].state.partiallyMatchedMoves = e.partiallyMatchedMoves;
     })
     this.tick = state.tick;
   }
+
+  /*
+
+  DEPRECATED OLD GARBAGE
 
   // step forward 1 tick
   this.update = function(network, tick, options){
@@ -114,7 +119,7 @@ export function FightEngine(fight, character, $container){
       }
       entity.act(inputHistory, tick + 1);
     })
-    Matter.Engine.update(this.physicsEngine, 20)
+    //Matter.Engine.update(this.physicsEngine, 20)
     if (options.render) {
       this.matchAndRender();
     }
@@ -125,7 +130,7 @@ export function FightEngine(fight, character, $container){
     return {
       tick: this.tick,
       entities: _.map(this.entities, function(entity, index){
-        return JSON.stringify({index, position: entity.body.position, velocity: entity.body.velocity});
+        return JSON.stringify({index, position: entity.body.pos, velocity: entity.body.velocity});
       }),
     };
   }
@@ -198,6 +203,7 @@ export function FightEngine(fight, character, $container){
       }
     }
   }
+  */
 
   this.syncCheck = function(){
     // TODO

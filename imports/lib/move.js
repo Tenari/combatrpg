@@ -31,8 +31,6 @@
    }
 */
 //var _ = require('underscore');
-import * as Matter from 'matter-js';
-
 export function Move(definition) {
   this.key = definition.key;
   this.cancelable = definition.cancelable || false; //default not a cancelable move
@@ -76,12 +74,11 @@ export function Move(definition) {
     if (!newFrame) {
       return this.finish(entity);
     }
-    console.log(definition.key);
     if (definition.effects.velocity) {
-      Matter.Body.setVelocity(entity.body, Matter.Vector.create(definition.effects.velocity, entity.body.velocity.y));
+      entity.body.velocity.x = definition.effects.velocity;
     }
     if (definition.effects.vertical) {
-      Matter.Body.setVelocity(entity.body, Matter.Vector.create(entity.body.velocity.x, definition.effects.vertical));
+      entity.body.velocity.y = definition.effects.vertical;
     }
     if (_.isObject(newFrame) && newFrame.spriteName && newFrame.spriteNumber) {
       entity.setSprites(newFrame.spriteName, newFrame.spriteNumber);
